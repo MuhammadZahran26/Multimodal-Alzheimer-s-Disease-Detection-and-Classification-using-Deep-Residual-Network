@@ -82,7 +82,7 @@ if not os.path.exists(MODEL_PATH):
 # Load model
 if os.path.exists(MODEL_PATH):
     print(" >>> SYSTEM: Found Model File. Loading AI...")
-    ai_model = preprocessing.load_model(MODEL_PATH)
+    #ai_model = preprocessing.load_model(MODEL_PATH)
 else:
     print(" >>> WARNING: Model file not found.")
     ai_model = None
