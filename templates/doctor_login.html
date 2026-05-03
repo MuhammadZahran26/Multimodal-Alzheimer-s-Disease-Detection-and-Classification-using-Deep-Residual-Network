@@ -1,0 +1,671 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Doctor Login — MediCare AI</title>
+
+  <!-- Tailwind config (keeps your custom theme) -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#0ea5a4',
+            accent: '#7c3aed',
+            brandBlue: '#0052cc'
+          },
+          keyframes: {
+            floaty: { '0%': { transform: 'translateY(0px)' }, '50%': { transform: 'translateY(-8px)' }, '100%': { transform: 'translateY(0px)' } },
+            slowFade: { '0%': { opacity: 0, transform: 'translateY(8px)' }, '100%': { opacity: 1, transform: 'translateY(0)' } },
+            shine: { '0%': { transform: 'translateX(-120%)' }, '100%': { transform: 'translateX(120%)' } }
+          },
+          animation: {
+            floaty: 'floaty 6s ease-in-out infinite',
+            slowFade: 'slowFade .6s cubic-bezier(.2,.9,.2,1) both',
+            shine: 'shine 1.2s linear infinite'
+          }
+        }
+      }
+    }
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <meta name="theme-color" content="#0ea5a4" />
+
+  <style>
+    /* Theme tokens */
+    :root{
+      --gradient-from: #0ea5a4;
+      --gradient-to:   #7c3aed;
+      --brand-blue:    #0052cc;
+      --text-default:  #0f1724;
+    }
+
+    html,body { height:100%; margin:0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; }
+    body {
+      /* background set to the path you confirmed */
+      background-image: linear-gradient(180deg, rgba(3,7,7,0.55), rgba(3,7,7,0.72)), url('/static/images/brain.jpg');
+      background-size: cover; background-position: center; background-attachment: fixed;
+      color: #e6eef0;
+    }
+
+    /* decorative & layout */
+    .bg-dimmer { position: fixed; inset:0; z-index:-1; pointer-events:none; background: linear-gradient(180deg, rgba(2,6,7,0.35), rgba(2,6,7,0.55)); }
+    .float-blob { position:absolute; width:880px; height:520px; left:50%; top:6%; transform:translateX(-50%); background: linear-gradient(120deg, rgba(14,165,164,0.12), rgba(124,58,237,0.06)); filter: blur(40px); border-radius:48px; opacity:0.26; animation: floaty 8s ease-in-out infinite; z-index:-1; }
+
+    .login-card { max-width:520px; width:100%; border-radius:14px; padding:2rem; background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02)); border:1px solid rgba(255,255,255,0.05); box-shadow:0 18px 60px rgba(2,6,23,0.56); backdrop-filter: blur(6px); }
+
+    .logo-mark { width:44px; height:44px; border-radius:10px; display:inline-flex; align-items:center; justify-content:center; background: linear-gradient(135deg, var(--gradient-from), var(--gradient-to)); box-shadow: 0 8px 30px rgba(2,6,23,0.25); }
+
+    .form-input { width:100%; padding:.62rem .9rem; border-radius:10px; border:1px solid rgba(255,255,255,0.06); background:rgba(255,255,255,0.03); color:#e6eef0; transition: box-shadow .12s, border-color .12s, transform .08s; font-size:0.95rem; }
+    .form-input::placeholder { color: rgba(230,238,240,0.42); }
+    .form-input:focus { outline:none; border-color: var(--gradient-from); box-shadow: 0 10px 30px rgba(14,165,164,0.06); transform: translateY(-1px); }
+
+    .btn-primary { display:inline-flex; align-items:center; justify-content:center; gap:.5rem; width:100%; padding:.75rem 1rem; border-radius:10px; border:none; cursor:pointer; font-weight:700; font-size:1.03rem; background: linear-gradient(135deg, var(--gradient-from), var(--gradient-to)); color:#fff; text-shadow:0 1px 0 rgba(0,0,0,0.18); box-shadow:0 12px 36px rgba(2,6,23,0.28); transition: transform .12s ease, box-shadow .12s ease, filter .12s ease; }
+    .btn-primary:hover, .btn-primary:focus { transform: translateY(-3px); filter: brightness(1.03); box-shadow:0 20px 48px rgba(2,6,23,0.34); }
+
+    .btn-back { display:inline-flex; align-items:center; gap:.5rem; padding:.5rem .75rem; border-radius:8px; border:1px solid rgba(255,255,255,0.06); background:rgba(255,255,255,0.03); color:#e6eef0; font-weight:600; text-decoration:none; }
+    .btn-back:hover { transform: translateY(-2px); box-shadow:0 8px 26px rgba(2,6,23,0.12); }
+
+    .muted { color: rgba(230,238,240,0.72); }
+
+    /* CTA shimmer */
+    .cta-shine { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+    .cta-shine::after { content:''; position:absolute; top:-40%; left:-40%; width:180%; height:180%; transform:rotate(12deg); opacity:0.12; background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.65) 50%, rgba(255,255,255,0) 100%); animation: shine 1.6s linear infinite; pointer-events:none; }
+
+    /* Help modal — improved styles (finalized) */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(2,6,7,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      padding: 1.25rem;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .modal {
+      width: 100%;
+      max-width: 720px;
+      border-radius: 12px;
+      background: linear-gradient(180deg, rgba(12,14,16,0.98), rgba(10,12,14,0.98));
+      border: 1px solid rgba(255,255,255,0.06);
+      box-shadow: 0 30px 80px rgba(2,6,23,0.8);
+      padding: 1.25rem;
+      color: #e6eef0;
+      z-index: 10000;
+      position: relative;
+      overflow: auto;
+      max-height: calc(100vh - 3rem);
+    }
+
+    .modal h3 { font-size: 1.125rem; font-weight: 700; margin: 0; color: #ffffff; }
+    .modal p.small { color: rgba(230,238,240,0.86); margin: .5rem 0 1rem 0; }
+
+    .help-grid { display:grid; grid-template-columns: 1fr 360px; gap:1rem; }
+    @media (max-width:880px) { .help-grid { grid-template-columns: 1fr; } .modal { max-width: 92vw; } }
+
+    .help-box {
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius: 10px;
+      padding: .85rem;
+      border: 1px solid rgba(255,255,255,0.03);
+      color: rgba(230,238,240,0.95);
+    }
+
+    .help-actions { display:flex; gap:.5rem; margin-top:.5rem; }
+    .input-ghost {
+      width:100%; padding:.5rem .75rem; border-radius:8px;
+      border:1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.06); color:#041d1b;
+    }
+
+    .close-btn { background: transparent; border: none; color: #ffffff; font-weight:600; padding:.5rem; cursor:pointer; border-radius:8px; }
+    .close-btn:hover { background: rgba(255,255,255,0.02); }
+
+    .link-muted { color: rgba(230,238,240,0.78); text-decoration:underline; cursor:pointer; }
+
+    .fade-in { animation: slowFade .28s ease both; }
+
+    /* Reset modal (separate modal for password reset flow) */
+    .reset-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(2,6,7,0.72);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      z-index:10020;
+      padding:1rem;
+    }
+    .reset-panel {
+      width:100%;
+      max-width:420px;
+      border-radius:12px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border:1px solid rgba(255,255,255,0.06);
+      padding:1.25rem;
+      box-shadow: 0 30px 80px rgba(2,6,23,0.8);
+      color: #e6eef0;
+    }
+    .reset-step { display:none; }
+    .reset-step.active { display:block; }
+    .small-note { color: rgba(230,238,240,0.78); font-size:0.92rem; }
+
+    @media (max-width:640px) {
+      .login-card { padding:1.25rem; margin: 0 12px; }
+    }
+
+  </style>
+</head>
+<body data-source="/templates/home.html">
+  <!-- background overlay -->
+  <div class="bg-dimmer" aria-hidden="true">
+    <div class="float-blob" aria-hidden="true"></div>
+  </div>
+
+  <div class="min-h-screen flex items-center justify-center py-12 px-4">
+    <div class="login-card" role="main" aria-labelledby="login-title">
+
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <!-- Back button linking to role selection -->
+          <a href="{{ url_for('select_role') }}" class="btn-back" aria-label="Go back to role selection">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="stroke:currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+            Back
+          </a>
+        </div>
+        <div class="text-xs muted">Secure • HIPAA-aware</div>
+      </div>
+
+      <div class="mb-6">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="logo-mark" aria-hidden="true">
+            <img src="/static/images/mental-health.png" alt="MediCare logo" class="w-7 h-7 object-contain" />
+          </div>
+          <div>
+            <div class="text-lg font-semibold text-white">MediCare <span style="color:var(--gradient-to)">AI</span></div>
+            <div class="text-xs muted">Explainable cognitive diagnostics</div>
+          </div>
+        </div>
+
+        <h1 id="login-title" class="text-2xl font-extrabold text-white mb-1">Welcome back</h1>
+        <p class="muted">Sign in to your clinician account to access patient scans, explainability maps, and monitoring tools.</p>
+      </div>
+
+      <form action="/login/doctor" method="POST">
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="mb-4">
+              {% for category, message in messages %}
+                <div class="
+                  px-4 py-3 rounded-lg text-sm font-medium
+                  {% if category == 'error' %}
+                    bg-red-500/15 text-red-300 border border-red-500/30
+                  {% elif category == 'success' %}
+                    bg-green-500/15 text-green-300 border border-green-500/30
+                  {% else %}
+                    bg-blue-500/15 text-blue-300 border border-blue-500/30
+                  {% endif %}
+                ">
+                  {{ message }}
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <div class="mb-4">
+          <label for="email" class="block text-sm font-medium muted mb-2">Email address</label>
+          <input id="email" name="email" type="email" autocomplete="email" required placeholder="you@hospital.org" class="form-input" />
+        </div>
+
+
+        <div class="mb-4">
+          <div class="flex items-center justify-between mb-2">
+            <label for="password" class="block text-sm font-medium muted">Password</label>
+            <!-- Need help opens help modal; "Need more help?" removed and replaced by Forgot password link -->
+            <!-- <a href="#" id="needHelp" class="text-sm muted hover:text-white">Need help?</a> -->
+          </div>
+          <input id="password" name="password" type="password" required minlength="8" placeholder="••••••••" class="form-input" />
+        </div>
+
+        <div class="flex items-center justify-between mb-4">
+          <label class="inline-flex items-center gap-2 muted">
+            <input id="remember" name="remember" type="checkbox" class="h-4 w-4 rounded accent-var(--gradient-from)" />
+            Remember me
+          </label>
+
+          <!-- Removed previous "Need more help?" link; replaced by direct Forgot Password trigger -->
+          <!-- <a href="#" id="forgotLink" class="text-sm muted hover:text-white">Forgot password?</a> -->
+        </div>
+
+        <div class="mb-4 relative">
+          <button type="submit" id="submitBtn" class="btn-primary" aria-live="polite">
+            Sign in
+            <span class="cta-shine" aria-hidden="true"></span>
+          </button>
+        </div>
+      </form>
+
+      <div class="mt-2 pt-4 border-t border-white/6 text-center">
+        <p class="text-sm muted">Don't have an account? <a href="{{ url_for('doctor_signup') }}" style="color:var(--gradient-from); font-weight:600">Sign up</a></p>
+        <p class="mt-3 text-xs muted">HIPAA Compliant • Encrypted connection • Audit logging</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- HELP MODAL (hidden) - Opened via Need help? -->
+  <div id="helpModal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+    <div class="modal-backdrop" id="helpBackdrop" tabindex="-1">
+      <div class="modal fade-in" role="document" aria-describedby="helpDesc">
+        <div class="flex items-start justify-between">
+          <div>
+            <h3 id="helpTitle">Need help signing in?</h3>
+            <p class="small" id="helpDesc">Choose an option below — reset your password, contact support, or read quick tips.</p>
+          </div>
+          <div>
+            <button class="close-btn" id="helpClose" aria-label="Close help">✕</button>
+          </div>
+        </div>
+
+        <div class="help-grid mt-4">
+          <!-- Left column: guidance + quick actions -->
+          <div>
+            <div class="help-box">
+              <strong>Forgot your password?</strong>
+              <p class="small">Click below to start the secure password reset flow (you'll receive a verification code by email).</p>
+              <div class="help-actions">
+                <!-- opens the reset flow -->
+                <button id="startResetFromHelp" class="btn-primary" style="width:auto; padding:.5rem .8rem;">Start reset</button>
+              </div>
+            </div>
+
+            <div class="help-box mt-3">
+              <strong>Contact support</strong>
+              <p class="small">Email our support team for account or technical issues.</p>
+              <div class="help-actions">
+                <a href="mailto:zahranzahid886@gmail.com" class="btn-back" style="display:inline-flex; align-items:center;">Email</a>
+                <a href="/templates/home.html" class="link-muted" title="Open homepage source (local)">Open homepage</a>
+              </div>
+            </div>
+
+            <div class="help-box mt-3">
+              <strong>Quick tips</strong>
+              <ul class="small" style="margin:.5rem 0 .2rem 0; color:rgba(230,238,240,0.75);">
+                <li>• Use your hospital email (no personal aliases).</li>
+                <li>• Passwords must be at least 8 characters.</li>
+                <li>• If you still can't sign in, contact support.</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Right column: support request form (AI Assistant removed) -->
+          <div>
+            <div class="help-box">
+              <strong>Send a quick support request</strong>
+              <p class="small">We'll email you a response. This is a demo — replace with your API endpoint.</p>
+              <form id="supportForm">
+                <input id="supportEmail" type="email" placeholder="your email" class="input-ghost" required style="color:#ffffff;" />
+                <textarea id="supportMsg" rows="5" required style="color:#ffffff;" placeholder="Describe your issue..." class="input-ghost" style="margin-top:.5rem; resize:vertical;"></textarea>
+                <div style="display:flex; gap:.5rem; margin-top:.6rem; align-items:center;">
+                  <button type="submit" class="btn-primary" style="padding:.5rem .8rem;">Send request</button>
+                </div>
+              </form>
+            </div>
+
+            <div class="help-box mt-3">
+              <strong>Privacy note</strong>
+              <p class="small">Do not include PHI (patient names, records) in support requests. For account help only.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESET PASSWORD FLOW (separate modal) -->
+  <div id="resetModal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="resetTitle">
+    <div class="reset-backdrop" id="resetBackdrop" tabindex="-1">
+      <div class="reset-panel" role="document">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <h3 id="resetTitle">Reset your password</h3>
+            <div class="small-note">We'll send a verification code to your email. Use that to set a new password.</div>
+          </div>
+          <div>
+            <button class="close-btn" id="resetClose" aria-label="Close reset">✕</button>
+          </div>
+        </div>
+
+        <!-- Step 1: Enter email -->
+        <div id="resetStep1" class="reset-step active">
+          <label class="small-note">Enter your account email</label>
+          <input id="resetEmailMain" type="email" class="input-ghost" placeholder="you@hospital.org" required style="color:#ffffff;" />
+          <div style="display:flex; gap:.5rem; margin-top:.6rem; align-items:center;">
+            <button id="sendCode" class="btn-primary" style="padding:.5rem .8rem;">Send code</button>
+            <button id="cancelReset1" class="btn-back" style="padding:.5rem .8rem;">Cancel</button>
+          </div>
+          <p id="step1Msg" class="small-note" style="margin-top:.6rem; display:none;"></p>
+        </div>
+
+        <!-- Step 2: Verify code -->
+        <div id="resetStep2" class="reset-step" aria-hidden="true">
+          <label class="small-note">Enter verification code</label>
+          <input id="verifyCode" type="text" class="input-ghost" placeholder="6-digit code" maxlength="8" required style="color:#ffffff;"/>
+          <div style="display:flex; gap:.5rem; margin-top:.6rem; align-items:center;">
+            <button id="verifyCodeBtn" class="btn-primary" style="padding:.5rem .8rem;">Verify</button>
+            <button id="resendCode" class="btn-back" style="padding:.5rem .8rem;">Resend</button>
+          </div>
+          <p id="step2Msg" class="small-note" style="margin-top:.6rem; display:none;"></p>
+        </div>
+
+        <!-- Step 3: Set new password -->
+        <div id="resetStep3" class="reset-step" aria-hidden="true">
+          <label class="small-note">Enter new password</label>
+          <input id="newPassword" type="password" class="input-ghost" required style="color:#ffffff;" placeholder="New password (min 8 chars)" />
+          <input id="confirmPassword" type="password" class="input-ghost" required style="color:#ffffff;" placeholder="Confirm new password" style="margin-top:.5rem;" />
+          <div style="display:flex; gap:.5rem; margin-top:.6rem; align-items:center;">
+            <button id="finishReset" class="btn-primary" style="padding:.5rem .8rem;">Set password</button>
+            <button id="cancelReset3" class="btn-back" style="padding:.5rem .8rem;">Cancel</button>
+          </div>
+          <p id="step3Msg" class="small-note" style="margin-top:.6rem; display:none;"></p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Optional chatbot panel (kept hidden) -->
+  <div id="chatbot-panel" class="hidden"></div>
+
+  <script>
+    (function () {
+      // Core login demo logic (unchanged)
+      const form = document.getElementById('loginForm');
+      const email = document.getElementById('email');
+      const password = document.getElementById('password');
+      const btn = document.getElementById('submitBtn');
+
+      function setBtnLoading(on) {
+        if (on) {
+          btn.disabled = true;
+          btn.style.opacity = '0.95';
+          btn.style.transform = 'translateY(-1px)';
+          btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 50 50" style="vertical-align:middle;margin-right:8px"><path fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" d="M25 5a20 20 0 010 40 20 20 0 010-40" stroke-dasharray="31.415,31.415"><animateTransform attributeName="transform" type="rotate" repeatCount="indefinite" dur="0.9s" from="0 25 25" to="360 25 25"/></path></svg>Signing in...';
+        } else {
+          btn.disabled = false;
+          btn.style.opacity = '';
+          btn.style.transform = '';
+          btn.innerHTML = 'Sign in';
+        }
+      }
+
+      function flashMessage(msg, type='info') {
+        const el = document.createElement('div');
+        el.setAttribute('role','status');
+        el.className = 'fixed left-1/2 top-6 transform -translate-x-1/2 z-50 rounded-md px-4 py-2 text-sm';
+        el.style.background = (type === 'error') ? 'rgba(220,38,38,0.96)' : 'linear-gradient(90deg,var(--gradient-from),var(--gradient-to))';
+        el.style.color = '#052f2f';
+        el.style.boxShadow = '0 10px 30px rgba(2,6,23,0.3)';
+        el.textContent = msg;
+        document.body.appendChild(el);
+        setTimeout(() => { el.style.transition = 'opacity .45s'; el.style.opacity = '0'; }, 1600);
+        setTimeout(() => el.remove(), 2200);
+      }
+
+      form.addEventListener('submit', function (ev) {
+        ev.preventDefault();
+        if (!email.value || !password.value) { flashMessage('Please fill both email and password', 'error'); return; }
+        if (password.value.length < 8) { flashMessage('Password must be at least 8 characters', 'error'); return; }
+        setBtnLoading(true);
+        setTimeout(() => {
+          setBtnLoading(false);
+          flashMessage('Signed in — demo session started', 'info');
+        }, 1100);
+      });
+
+      // ---------- Help modal controls ----------
+      const needHelp = document.getElementById('needHelp');
+      const helpModal = document.getElementById('helpModal');
+      const helpBackdrop = document.getElementById('helpBackdrop');
+      const helpClose = document.getElementById('helpClose');
+      const startResetFromHelp = document.getElementById('startResetFromHelp');
+
+      // Open / close help modal (accessible)
+      function openHelpAccessible() {
+        // hide other content from screen readers
+        document.querySelectorAll('body > *:not(#helpModal):not(#resetModal)').forEach(el => el.setAttribute('aria-hidden','true'));
+        helpModal.classList.remove('hidden');
+        // focus first actionable item
+        setTimeout(() => startResetFromHelp && startResetFromHelp.focus(), 80);
+        document.documentElement.style.overflow = 'hidden';
+      }
+      function closeHelpAccessible() {
+        helpModal.classList.add('hidden');
+        document.querySelectorAll('body > *:not(#helpModal):not(#resetModal)').forEach(el => el.removeAttribute('aria-hidden'));
+        document.documentElement.style.overflow = '';
+        try { needHelp && needHelp.focus(); } catch(e) {}
+      }
+
+      if (needHelp) needHelp.addEventListener('click', (e) => { e.preventDefault(); openHelpAccessible(); });
+      if (helpClose) helpClose.addEventListener('click', (e) => { e.preventDefault(); closeHelpAccessible(); });
+      if (helpBackdrop) helpBackdrop.addEventListener('click', (e) => { if (e.target === helpBackdrop) closeHelpAccessible(); });
+
+      // ---------- Reset password flow ----------
+      const resetModal = document.getElementById('resetModal');
+      const resetBackdrop = document.getElementById('resetBackdrop');
+      const resetClose = document.getElementById('resetClose');
+      const forgotLink = document.getElementById('forgotLink');
+
+      const resetStep1 = document.getElementById('resetStep1');
+      const resetStep2 = document.getElementById('resetStep2');
+      const resetStep3 = document.getElementById('resetStep3');
+
+      const resetEmailMain = document.getElementById('resetEmailMain');
+      const step1Msg = document.getElementById('step1Msg');
+      const sendCodeBtn = document.getElementById('sendCode');
+      const cancelReset1 = document.getElementById('cancelReset1');
+
+      const verifyCodeInput = document.getElementById('verifyCode');
+      const verifyCodeBtn = document.getElementById('verifyCodeBtn');
+      const resendCodeBtn = document.getElementById('resendCode');
+      const step2Msg = document.getElementById('step2Msg');
+
+      const newPasswordInput = document.getElementById('newPassword');
+      const confirmPasswordInput = document.getElementById('confirmPassword');
+      const finishResetBtn = document.getElementById('finishReset');
+      const cancelReset3 = document.getElementById('cancelReset3');
+      const step3Msg = document.getElementById('step3Msg');
+
+      // simulated code and email storage (demo only)
+      let simulatedCode = null;
+      let simulatedEmail = null;
+      let codeExpiry = null;
+
+      // helpers
+      function openResetModal() {
+        // hide background including help modal
+        document.querySelectorAll('body > *:not(#resetModal)').forEach(el => el.setAttribute('aria-hidden','true'));
+        resetModal.classList.remove('hidden');
+        showResetStep(1);
+        setTimeout(() => resetEmailMain && resetEmailMain.focus(), 80);
+        document.documentElement.style.overflow = 'hidden';
+      }
+      function closeResetModal() {
+        resetModal.classList.add('hidden');
+        document.querySelectorAll('body > *:not(#resetModal)').forEach(el => el.removeAttribute('aria-hidden'));
+        document.documentElement.style.overflow = '';
+        // clear fields
+        resetEmailMain.value = '';
+        verifyCodeInput.value = '';
+        newPasswordInput.value = '';
+        confirmPasswordInput.value = '';
+        step1Msg.style.display = 'none';
+        step2Msg.style.display = 'none';
+        step3Msg.style.display = 'none';
+      }
+
+      function showResetStep(n) {
+        resetStep1.classList.remove('active'); resetStep2.classList.remove('active'); resetStep3.classList.remove('active');
+        if (n === 1) { resetStep1.classList.add('active'); resetStep1.removeAttribute('aria-hidden'); resetStep2.setAttribute('aria-hidden','true'); resetStep3.setAttribute('aria-hidden','true'); }
+        if (n === 2) { resetStep2.classList.add('active'); resetStep2.removeAttribute('aria-hidden'); resetStep1.setAttribute('aria-hidden','true'); resetStep3.setAttribute('aria-hidden','true'); }
+        if (n === 3) { resetStep3.classList.add('active'); resetStep3.removeAttribute('aria-hidden'); resetStep1.setAttribute('aria-hidden','true'); resetStep2.setAttribute('aria-hidden','true'); }
+      }
+
+      // wire help -> reset
+      if (startResetFromHelp) startResetFromHelp.addEventListener('click', (e) => {
+        e.preventDefault();
+        closeHelpAccessible(); // close help first
+        openResetModal();
+      });
+
+      if (forgotLink) forgotLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        openResetModal();
+      });
+
+      if (resetClose) resetClose.addEventListener('click', (e) => { e.preventDefault(); closeResetModal(); });
+
+      if (resetBackdrop) resetBackdrop.addEventListener('click', (e) => { if (e.target === resetBackdrop) closeResetModal(); });
+
+      // send code (simulated)
+      sendCodeBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const v = (resetEmailMain.value || '').trim();
+        if (!v || !v.includes('@')) {
+          step1Msg.style.display = 'block'; step1Msg.textContent = 'Please enter a valid email address.'; step1Msg.style.color = 'rgba(255,90,90,0.95)';
+          resetEmailMain.focus();
+          return;
+        }
+        // simulate sending: generate 6-digit code
+        simulatedCode = String(Math.floor(100000 + Math.random() * 900000));
+        simulatedEmail = v;
+        codeExpiry = Date.now() + (10 * 60 * 1000); // 10 minutes
+        // show friendly message and move to step 2
+        step1Msg.style.display = 'block'; step1Msg.style.color = 'rgba(140,230,220,0.95)';
+        step1Msg.textContent = `Verification code sent to ${v} (demo). Code: ${simulatedCode}`;
+        // In production: do not display code in UI; this is demo-only.
+        setTimeout(() => { showResetStep(2); setTimeout(()=> verifyCodeInput.focus(),80); }, 900);
+      });
+
+      // verify code
+      verifyCodeBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const code = (verifyCodeInput.value || '').trim();
+        if (!code) { step2Msg.style.display = 'block'; step2Msg.style.color = 'rgba(255,90,90,0.95)'; step2Msg.textContent = 'Please enter the verification code.'; verifyCodeInput.focus(); return; }
+        if (!simulatedCode || Date.now() > codeExpiry) {
+          step2Msg.style.display = 'block'; step2Msg.style.color = 'rgba(255,90,90,0.95)'; step2Msg.textContent = 'Code expired. Please resend.'; return;
+        }
+        if (code !== simulatedCode) {
+          step2Msg.style.display = 'block'; step2Msg.style.color = 'rgba(255,90,90,0.95)'; step2Msg.textContent = 'Invalid code. Check and try again.'; verifyCodeInput.focus(); return;
+        }
+        // success
+        step2Msg.style.display = 'block'; step2Msg.style.color = 'rgba(140,230,220,0.95)'; step2Msg.textContent = 'Code verified. Please set a new password.';
+        setTimeout(() => { showResetStep(3); setTimeout(()=> newPasswordInput.focus(),80); }, 600);
+      });
+
+      // resend code
+      resendCodeBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (!simulatedEmail) {
+          flashMessage('No email in session — start reset again.', 'error');
+          return;
+        }
+        // generate new code
+        simulatedCode = String(Math.floor(100000 + Math.random() * 900000));
+        codeExpiry = Date.now() + (10 * 60 * 1000);
+        step2Msg.style.display = 'block'; step2Msg.style.color = 'rgba(140,230,220,0.95)'; step2Msg.textContent = `New code sent to ${simulatedEmail} (demo). Code: ${simulatedCode}`;
+      });
+
+      // finish reset (set new password)
+      finishResetBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const p1 = (newPasswordInput.value || '').trim();
+        const p2 = (confirmPasswordInput.value || '').trim();
+        if (p1.length < 8) { step3Msg.style.display = 'block'; step3Msg.style.color = 'rgba(255,90,90,0.95)'; step3Msg.textContent = 'Password must be at least 8 characters.'; newPasswordInput.focus(); return; }
+        if (p1 !== p2) { step3Msg.style.display = 'block'; step3Msg.style.color = 'rgba(255,90,90,0.95)'; step3Msg.textContent = 'Passwords do not match.'; confirmPasswordInput.focus(); return; }
+        // simulate success (in production call API)
+        step3Msg.style.display = 'block'; step3Msg.style.color = 'rgba(140,230,220,0.95)'; step3Msg.textContent = 'Password reset successful. You can now sign in.';
+        // clear simulated data
+        simulatedCode = null; simulatedEmail = null; codeExpiry = null;
+        setTimeout(() => {
+          closeResetModal();
+          flashMessage('Password reset complete — please sign in with your new password', 'info');
+        }, 1100);
+      });
+
+      // cancel/reset buttons
+      cancelReset1.addEventListener('click', (e) => { e.preventDefault(); closeResetModal(); });
+      cancelReset3.addEventListener('click', (e) => { e.preventDefault(); closeResetModal(); });
+
+      // ---------- Support form (demo) ----------
+      const supportForm = document.getElementById('supportForm');
+      supportForm && supportForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const se = document.getElementById('supportEmail').value.trim();
+        const sm = document.getElementById('supportMsg').value.trim();
+        if (!se || !sm) { flashMessage('Please provide your email and a short message', 'error'); return; }
+        flashMessage('Support request queued (demo). We will respond via email.', 'info');
+        document.getElementById('supportEmail').value = '';
+        document.getElementById('supportMsg').value = '';
+      });
+
+      // ---------- Accessibility: focus trap + aria-hidden toggling for help & reset ----------
+      (function () {
+        function trapFocus(modalEl) {
+          if (!modalEl) return;
+          const FOCUSABLE = 'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])';
+          const nodes = Array.from(modalEl.querySelectorAll(FOCUSABLE)).filter(n => n.offsetParent !== null);
+          if (!nodes.length) return;
+          let first = nodes[0], last = nodes[nodes.length - 1];
+          first.focus();
+          function handler(e) {
+            if (e.key !== 'Tab') return;
+            if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+            else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+          }
+          modalEl.__handler = handler;
+          document.addEventListener('keydown', handler);
+        }
+        function releaseTrap(modalEl) {
+          if (modalEl && modalEl.__handler) {
+            document.removeEventListener('keydown', modalEl.__handler);
+            delete modalEl.__handler;
+          }
+        }
+
+        // wire traps when opening help/reset
+        const helpModalEl = document.getElementById('helpModal');
+        const resetModalEl = document.getElementById('resetModal');
+
+        // observe class changes (very small helper)
+        const obs = new MutationObserver(() => {
+          if (helpModalEl && !helpModalEl.classList.contains('hidden')) trapFocus(helpModalEl);
+          else if (helpModalEl) releaseTrap(helpModalEl);
+          if (resetModalEl && !resetModalEl.classList.contains('hidden')) trapFocus(resetModalEl);
+          else if (resetModalEl) releaseTrap(resetModalEl);
+        });
+        if (helpModalEl) obs.observe(helpModalEl, { attributes: true, attributeFilter: ['class'] });
+        if (resetModalEl) obs.observe(resetModalEl, { attributes: true, attributeFilter: ['class'] });
+      })();
+
+      // global Escape handler (close any open modal)
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          const help = document.getElementById('helpModal');
+          const reset = document.getElementById('resetModal');
+          if (reset && !reset.classList.contains('hidden')) { closeResetModal(); return; }
+          if (help && !help.classList.contains('hidden')) { closeHelpAccessible(); return; }
+        }
+      });
+
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Analysis Results — MediCare AI</title>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#0ea5a4',
+            accent: '#7c3aed',
+            brandBlue: '#0052cc',
+            slateDark: '#0f1724'
+          },
+          animation: {
+            'fadeIn': 'fadeIn 0.6s ease-out forwards',
+            'slideUp': 'slideUp 0.6s ease-out forwards',
+            'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+          },
+          keyframes: {
+            fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+            slideUp: { '0%': { opacity: '0', transform: 'translateY(15px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } }
+          }
+        }
+      }
+    }
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <style>
+    body {
+      background-image:
+        linear-gradient(180deg, rgba(255,255,255,0.92), rgba(245,247,250,0.96)),
+        url('/static/images/brain.jpg'); 
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      font-family: 'Inter', sans-serif;
+      color: #1e293b;
+    }
+
+    /* Glass Panels */
+    .glass-card {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
+    }
+  </style>
+  <style>
+    /* --- MEDIBOT CHAT STYLES --- */
+    .chat-toggler {
+        position: fixed !important;
+        bottom: 30px !important;
+        right: 30px !important;
+        height: 60px;
+        width: 60px;
+        background: linear-gradient(135deg, #0ea5a4, #7c3aed);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        transition: transform 0.2s ease;
+        z-index: 2147483647 !important; /* Maximum z-index */
+    }
+    .chat-toggler:hover { transform: scale(1.1); }
+    
+    #chat-container {
+        position: fixed !important;
+        bottom: 100px !important;
+        right: 30px !important;
+        width: 380px;
+        height: 500px;
+        max-height: 70vh !important; /* Responsive height */
+        background: #fff;
+        border-radius: 15px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        display: none;
+        flex-direction: column;
+        overflow: hidden;
+        z-index: 2147483647 !important;
+        border: 1px solid #e2e8f0;
+        animation: slideIn 0.3s ease;
+    }
+    
+    @keyframes slideIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+
+    /* Internal Elements */
+    .chat-header { background: linear-gradient(135deg, #0ea5a4, #7c3aed); padding: 15px; color: white; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+    .chat-header h4 { margin: 0; font-size: 1.1rem; font-weight: 700; }
+    .chat-header span { font-size: 0.8rem; opacity: 0.9; }
+    
+    .chat-box { flex: 1; padding: 15px; overflow-y: auto; background: #f8fafc; min-height: 0; }
+    
+    .message-row { display: flex; margin-bottom: 15px; align-items: flex-start; }
+    .user-msg { margin-left: auto; background: #0ea5a4; color: white; padding: 10px 15px; border-radius: 15px 15px 0 15px; max-width: 80%; font-size: 0.9rem; }
+    .bot-msg { background: #e2e8f0; color: #1e293b; padding: 10px 15px; border-radius: 15px 15px 15px 0; max-width: 80%; font-size: 0.9rem; }
+    
+    .input-area { padding: 10px; border-top: 1px solid #e2e8f0; background: #fff; display: flex; gap: 10px; flex-shrink: 0; }
+    .input-area input { flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 20px; outline: none; font-size: 0.9rem; }
+    .send-btn, .mic-btn { background: #0ea5a4; color: white; border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display:flex; align-items:center; justify-content:center; }
+    .mic-btn.active { background: #ef4444; animation: pulse 1.5s infinite; }
+    .close-btn { background:transparent; border:none; color:white; font-size:1.2rem; cursor:pointer; }
+    
+    /* Mobile Fix */
+    @media (max-width: 480px) {
+        #chat-container { width: 90%; right: 5%; bottom: 90px; height: 70vh; }
+    }
+</style>
+</head>
+<body class="min-h-screen p-4 md:p-8">
+
+  <div class="max-w-5xl mx-auto space-y-8">
+
+    <nav class="flex items-center justify-between animate-[fadeIn_0.5s]">
+        <a href="{{ url_for('patient_dashboard') }}" class="flex items-center gap-2 text-slate-500 hover:text-primary transition-colors font-medium">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+            Back to Dashboard
+        </a>
+        <div class="text-sm text-slate-400">Scan ID: #SCN-{{ scan.id }}</div>
+    </nav>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+        <div class="lg:col-span-2 space-y-6 animate-[slideUp_0.5s]">
+            
+            <div class="glass-card rounded-2xl p-8 text-center border-t-4 shadow-xl 
+                {% if scan.prediction == 'AD' %} border-red-500
+                {% elif scan.prediction == 'MCI' %} border-orange-500
+                {% else %} border-green-500 {% endif %}">
+                
+                <h1 class="text-2xl font-bold text-slate-800 mb-2">Analysis Complete</h1>
+                <p class="text-slate-500 mb-8">Our multimodal AI has processed your scan data.</p>
+
+                <div class="inline-flex flex-col items-center justify-center p-6 rounded-2xl border mb-6
+                    {% if scan.prediction == 'AD' %} bg-red-50 border-red-100 text-red-700
+                    {% elif scan.prediction == 'MCI' %} bg-orange-50 border-orange-100 text-orange-700
+                    {% else %} bg-green-50 border-green-100 text-green-700 {% endif %}">
+                    
+                    <span class="text-xs font-bold uppercase tracking-widest mb-2 opacity-80">Detected Condition</span>
+                    
+                    <span class="text-4xl md:text-5xl font-extrabold leading-tight">
+                        {% if scan.prediction == 'AD' %} Alzheimer's Disease
+                        {% elif scan.prediction == 'MCI' %} Mild Cognitive Impairment
+                        {% else %} Cognitively Normal {% endif %}
+                    </span>
+                    
+                    <span class="text-sm font-bold mt-1 opacity-80">
+                        {% if scan.prediction == 'AD' %} (Advanced Stage Risk)
+                        {% elif scan.prediction == 'MCI' %} (Early Stage Risk)
+                        {% else %} (No Abnormalities Detected) {% endif %}
+                    </span>
+                </div>
+
+                <div class="max-w-md mx-auto">
+                    <div class="flex justify-between text-xs font-bold text-slate-500 mb-1">
+                        <span>AI Confidence</span>
+                        <span>{{ scan.confidence_score }}%</span>
+                    </div>
+                    <div class="h-4 w-full bg-slate-100 rounded-full overflow-hidden shadow-inner">
+                        <div class="h-full rounded-full shadow-lg transition-all duration-1000 ease-out
+                            {% if scan.prediction == 'AD' %} bg-gradient-to-r from-red-400 to-red-600
+                            {% elif scan.prediction == 'MCI' %} bg-gradient-to-r from-orange-400 to-orange-500
+                            {% else %} bg-gradient-to-r from-green-400 to-green-600 {% endif %}"
+                            style="width: {{ scan.confidence_score }}%;">
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-2 italic">Based on structural MRI analysis and demographic factors.</p>
+                </div>
+            </div>
+
+            <!-- <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0h6m6 0v-6a2 2 0 00-2-2h-2a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2z"/></svg>
+                        Explainability Map
+                    </h2>
+                    <span class="bg-slate-100 text-slate-600 px-2 py-1 rounded text-xs font-bold">Grad-CAM</span>
+                </div>
+                
+                <div class="bg-slate-900 rounded-xl overflow-hidden relative group aspect-video flex items-center justify-center">
+                    <div class="absolute inset-0 opacity-60 bg-cover bg-center mix-blend-luminosity"
+                         style="background-image: url('/{{ scan.file_path }}');">
+                    </div>
+                    <div class="absolute inset-0 opacity-50 mix-blend-overlay bg-gradient-to-tr from-blue-900 via-transparent to-red-600"></div>
+                    
+                    <div class="relative z-10 text-center">
+                        <div class="inline-block bg-black/60 backdrop-blur-sm text-white px-4 py-2 rounded-lg text-sm font-medium border border-white/10">
+                            Region of Interest Analysis
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-lg flex gap-3 items-start">
+                    <svg class="w-5 h-5 text-blue-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <p class="text-sm text-blue-800">
+                        <strong>AI Note:</strong> The highlighted regions indicate potential atrophy or metabolic reduction patterns consistent with {{ scan.prediction }}.
+                    </p>
+                </div>
+            </div> -->
+
+        </div>
+
+        <div class="lg:col-span-1 space-y-6 animate-[slideUp_0.7s]">
+            
+            <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-lg relative overflow-hidden">
+                <div class="absolute top-0 right-0 p-3 opacity-10">
+                    <svg class="w-24 h-24 text-primary" fill="currentColor" viewBox="0 0 24 24"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                </div>
+                <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2 relative z-10">
+                    <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                    Recommended Specialists
+                </h3>
+
+                <div class="space-y-4 relative z-10">
+                    {% if scan.prediction == 'CN' %}
+                        <p class="text-sm text-slate-600 mb-2">Your results are normal. Routine annual checkups are recommended.</p>
+                        
+                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 hover:border-primary/30 transition-colors group">
+                            <div class="flex justify-between items-start mb-1">
+                                <div>
+                                    <div class="font-bold text-slate-800 group-hover:text-primary transition-colors">Aga Khan Family Health</div>
+                                    <div class="text-xs text-slate-500">Preventive Care Unit</div>
+                                </div>
+                                <div class="text-xs font-bold text-green-600 bg-green-100 px-2 py-0.5 rounded">Karachi</div>
+                            </div>
+                            <div class="text-xs text-slate-500 mt-1 mb-2">Stadium Road, Karachi</div>
+                            <a href="tel:+9221111911911" class="w-full mt-2 bg-white border border-slate-200 text-slate-600 text-xs font-bold py-1.5 rounded-lg hover:bg-primary hover:text-white transition-colors flex items-center justify-center gap-1">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                                Call 021-111-911-911
+                            </a>
+                        </div>
+
+                    {% else %}
+                        <p class="text-sm text-slate-600 mb-2">We recommend consulting a top specialist immediately.</p>
+                        
+                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 hover:border-primary/30 transition-colors group">
+                            <div class="flex justify-between items-start mb-1">
+                                <div>
+                                    <div class="font-bold text-slate-800 group-hover:text-primary transition-colors">Dr. Arsalan Ahmad</div>
+                                    <div class="text-xs text-slate-500">Neurologist • Shifa Int. Hospital</div>
+                                </div>
+                                <div class="text-xs font-bold text-red-600 bg-red-100 px-2 py-0.5 rounded">Islamabad</div>
+                            </div>
+                            <div class="text-xs text-slate-500 mt-1 mb-2">Pitras Bukhari Road, H-8/4</div>
+                            <div class="flex gap-2">
+                                <a href="tel:+92518464646" class="flex-1 bg-white border border-slate-200 text-slate-600 text-xs font-bold py-1.5 rounded-lg hover:bg-primary hover:text-white transition-colors flex items-center justify-center">
+                                    Call Now
+                                </a>
+                                <a href="mailto:info@shifa.com.pk" class="flex-1 bg-white border border-slate-200 text-slate-600 text-xs font-bold py-1.5 rounded-lg hover:bg-primary hover:text-white transition-colors flex items-center justify-center">
+                                    Email
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 hover:border-primary/30 transition-colors group">
+                            <div class="flex justify-between items-start mb-1">
+                                <div>
+                                    <div class="font-bold text-slate-800 group-hover:text-primary transition-colors">Dr. Ayeesha Kamran</div>
+                                    <div class="text-xs text-slate-500">Neurologist • Aga Khan Hospital</div>
+                                </div>
+                                <div class="text-xs font-bold text-red-600 bg-red-100 px-2 py-0.5 rounded">Karachi</div>
+                            </div>
+                            <div class="text-xs text-slate-500 mt-1 mb-2">Stadium Road, Karachi</div>
+                            <div class="flex gap-2">
+                                <a href="tel:+9221111911911" class="flex-1 bg-white border border-slate-200 text-slate-600 text-xs font-bold py-1.5 rounded-lg hover:bg-primary hover:text-white transition-colors flex items-center justify-center">
+                                    Call Now
+                                </a>
+                                <a href="https://hospitals.aku.edu" target="_blank" class="flex-1 bg-white border border-slate-200 text-slate-600 text-xs font-bold py-1.5 rounded-lg hover:bg-primary hover:text-white transition-colors flex items-center justify-center">
+                                    Website
+                                </a>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <button onclick="window.print()" class="w-full bg-slate-800 text-white py-4 rounded-xl font-bold shadow-lg hover:bg-slate-700 hover:-translate-y-1 transition-all flex items-center justify-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                Download PDF Report
+            </button>
+
+        </div>
+
+    </div>
+  </div>
+<div id="medibot-wrapper" style="position: relative; z-index: 2147483647;">
+    {% include 'chatbot.html' %}
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        
+        // --- CONFIGURATION ---
+        const chatContainer = document.getElementById("chat-container");
+        const chatBox = document.getElementById("chat-box");
+        const chatForm = document.getElementById("chat-form");
+        const chatInput = document.getElementById("text");
+        const micBtn = document.getElementById("mic-btn");
+        const resizeHandle = document.getElementById("resize-handle");
+        const typingIndicator = document.getElementById("typing");
+
+        // Session ID
+        let sessionId = localStorage.getItem("chat_session_id");
+        if (!sessionId) {
+            sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem("chat_session_id", sessionId);
+        }
+
+        // --- TOGGLE CHAT ---
+        window.toggleChat = function() {
+            if (chatContainer.style.display === "flex") {
+                chatContainer.style.display = "none";
+            } else {
+                chatContainer.style.display = "flex";
+                if(window.innerWidth < 768) {
+                    chatContainer.style.width = "90%";
+                    chatContainer.style.height = "70vh";
+                }
+            }
+        };
+
+        // --- APPEND MESSAGES ---
+        function appendMessage(content, sender) {
+            const div = document.createElement("div");
+            div.className = "message-row";
+            const uniqueId = "msg-" + Date.now();
+
+            if (sender === 'user') {
+                div.innerHTML = `
+                    <div class="user-msg">${content}</div>
+                    <div class="avatar user-avatar" style="width:30px;height:30px;background:#0ea5a4;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-left:8px;color:white;"><i class="fas fa-user"></i></div>
+                `;
+            } else {
+                const htmlContent = marked.parse(content);
+                div.innerHTML = `
+                    <div class="avatar bot-avatar" style="width:30px;height:30px;background:#e2e8f0;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-right:8px;flex-shrink:0;"><i class="fas fa-robot text-slate-600"></i></div>
+                    <div class="message-content-wrapper" style="max-width: 80%;">
+                        <div class="bot-msg prose prose-sm max-w-none text-slate-800" id="${uniqueId}">${htmlContent}</div>
+                        <div class="msg-actions" style="margin-top: 4px;">
+                            <button class="speak-btn text-slate-400 hover:text-primary transition-colors" onclick="speakMessage('${uniqueId}', this)">
+                                <i class="fas fa-volume-up text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        // --- SEND LOGIC ---
+        if(chatForm){
+            chatForm.addEventListener("submit", async (e) => {
+                e.preventDefault();
+                const msg = chatInput.value.trim();
+                if (!msg) return;
+
+                appendMessage(msg, "user");
+                chatInput.value = "";
+                typingIndicator.style.display = "block";
+                chatBox.scrollTop = chatBox.scrollHeight;
+
+                try {
+                    const formData = new FormData();
+                    formData.append("msg", msg);
+                    formData.append("session_id", sessionId);
+
+                    const response = await fetch("/get_response", { method: "POST", body: formData });
+                    const data = await response.json();
+
+                    typingIndicator.style.display = "none";
+                    if(data.response) appendMessage(data.response, "bot");
+                    else appendMessage("⚠️ Error: No response received.", "bot");
+
+                } catch (err) {
+                    console.error(err);
+                    typingIndicator.style.display = "none";
+                    appendMessage("⚠️ Network Error.", "bot");
+                }
+            });
+        }
+
+        // --- SPEECH & MIC LOGIC ---
+        // (Include the speech synthesis and mic logic from home.html if needed)
+        // For brevity, the core chat logic is above.
+    });
+</script> 
+</body>
+</html>

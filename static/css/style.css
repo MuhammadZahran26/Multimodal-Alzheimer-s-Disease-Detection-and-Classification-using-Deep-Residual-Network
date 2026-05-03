@@ -1,0 +1,259 @@
+/* I am not using this style.css anymore */
+
+/* --------------------------
+   CSS Variables
+   -------------------------- */
+   
+:root{
+  --btn-grad-from: #0ea5a4;
+  --btn-grad-to:   #7c3aed;
+  --text-default:  #0f1724;
+  --glass-bg: rgba(255,255,255,0.62);
+}
+
+/* fallback utilities for critical classes in case Tailwind custom colors are not present */
+.bg-primary { background-color: var(--btn-grad-from) !important; }
+.text-primary { color: var(--btn-grad-from) !important; }
+.bg-accent  { background-image: linear-gradient(90deg, var(--btn-grad-from), var(--btn-grad-to)) !important; }
+.bg-brandBlue { background-color: #0052cc !important; }
+
+/* --------------------------
+   Global / Body
+   -------------------------- */
+html,body { height: 100%; }
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: var(--text-default);
+  background-image:
+    linear-gradient(180deg, rgba(255,255,255,0.80), rgba(245,247,250,0.92)),
+    url('/static/images/brain.jpg');
+  background-attachment: fixed;
+  background-size: cover;
+  background-position: center;
+}
+
+/* --------------------------
+   Small helpers
+   -------------------------- */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.logo-mark { filter: drop-shadow(0 6px 18px rgba(12,12,60,0.12)); }
+
+/* --------------------------
+   Animated gradient button
+   Usage: .btn-animated
+   -------------------------- */
+/*
+  Key changes to fix the issue where the gradient overlay (::before)
+  was appearing above the button text/icons:
+   - Give the button a positive z-index (1)
+   - Give the ::before overlay a lower z-index (0)
+   - Ensure direct children sit above the overlay (z-index:2)
+   - Force hover color to white with !important so Tailwind doesn't override
+*/
+.btn-animated {
+  background: #ffffff;
+  color: var(--text-default);
+  border: 1px solid rgba(15,23,36,0.06);
+
+  /* stacking & layout */
+  position: relative;
+  z-index: 1;               /* ensure button sits above its ::before overlay */
+  overflow: hidden;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+
+  transition: color .22s ease, transform .18s ease, box-shadow .18s ease;
+}
+
+/* gradient overlay layer sits behind the content (z-index:0) */
+.btn-animated::before{
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, var(--btn-grad-from), var(--btn-grad-to));
+  opacity: 0;
+  transform: scale(1.03);
+  transition: opacity .28s ease, transform .28s ease;
+  background-size: 200% 200%;
+  z-index: 0;                 /* behind the button content */
+  pointer-events: none;
+  animation: gradientShift 6s ease infinite;
+}
+
+/* ensure any direct children (text / SVG) sit above overlay */
+.btn-animated > * { position: relative; z-index: 2; }
+
+/* hover: reveal gradient and force white text/icons (use !important to beat Tailwind defaults) */
+.btn-animated:hover,
+.btn-animated:focus {
+  color: #ffffff !important;      /* text becomes white */
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 8px 28px rgba(16,24,40,0.12);
+}
+
+.btn-animated:hover::before,
+.btn-animated:focus::before {
+  opacity: 1;
+}
+
+/* SVG and icon handling: use currentColor and ensure white on hover */
+.btn-animated svg,
+.btn-animated .icon {
+  stroke: currentColor;
+  fill: none;
+  color: inherit;
+  transition: stroke .22s ease, fill .22s ease;
+}
+
+/* defensive override so SVG strokes become white on hover */
+.btn-animated:hover svg,
+.btn-animated:focus svg {
+  stroke: #ffffff !important;
+  fill: #ffffff !important;
+}
+
+/* focus ring helper */
+.focus-ring:focus {
+  outline: 3px solid rgba(14,165,164,0.12);
+  outline-offset: 3px;
+}
+
+/* --------------------------
+   Cards / hero helpers
+   -------------------------- */
+.card-accent {
+  background: linear-gradient(180deg, rgba(14,165,164,0.06), rgba(124,58,237,0.04));
+}
+.hero-img-overlay {
+  background: linear-gradient(180deg, rgba(6,7,10,0.22), rgba(255,255,255,0.02));
+}
+
+/* decorative dot grid */
+.dot-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+
+/* feature icon stacking */
+.feature-icon { z-index: 2; }
+
+/* small card and feature hover */
+.feature-card {
+  background: #fff;
+  border-radius: 1rem;
+  padding: 1.25rem;
+  border: 1px solid rgba(15,23,36,0.04);
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+.feature-card:hover { transform: translateY(-6px); box-shadow: 0 18px 40px rgba(15,23,42,0.08); }
+
+/* subtle rounded helpers */
+.rounded-2xl { border-radius: 1rem; }
+.rounded-xl { border-radius: .75rem; }
+.rounded-lg { border-radius: .5rem; }
+
+/* --------------------------
+   Chatbot / floating panel
+   -------------------------- */
+#chatbot-toggle {
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+#chatbot-toggle:hover { transform: translateY(-3px) scale(1.02); }
+#chatbot-panel { width: 20rem; max-width: calc(100vw - 2rem); border-radius: 0.66rem; overflow: hidden; }
+
+/* --------------------------
+   Hero responsive fallback
+   -------------------------- */
+.hero-img { height: 320px; object-fit: cover; }
+@media (min-width: 640px) { .hero-img { height: 360px; } }
+@media (min-width: 1024px) { .hero-img { height: 420px; } }
+
+/* --------------------------
+   Animations & keyframes
+   -------------------------- */
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+@keyframes floaty {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+  100% { transform: translateY(0px); }
+}
+.animate-floaty { animation: floaty 4s ease-in-out infinite; }
+
+@keyframes fadeInUp {
+  0% { opacity: 0; transform: translateY(16px) scale(.996); }
+  60% { opacity: .98; transform: translateY(-6px) scale(1.002); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.animate-fadeInUp { animation: fadeInUp .9s cubic-bezier(.2,.9,.2,1) both; }
+
+@keyframes ringPulse {
+  0% { transform: scale(.9); opacity: .6; }
+  70% { transform: scale(1.6); opacity: 0; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+.animate-ringPulse { animation: ringPulse 1.6s cubic-bezier(.66,.0,.2,1) infinite; }
+
+/* --------------------------
+   Forms / Inputs
+   -------------------------- */
+.input {
+  width: 100%;
+  padding: .5rem .75rem;
+  border-radius: .5rem;
+  border: 1px solid rgba(15,23,36,0.08);
+  background: #fff;
+  transition: box-shadow .14s ease, border-color .14s ease;
+}
+.input:focus { outline: none; border-color: var(--btn-grad-from); box-shadow: 0 6px 20px rgba(14,165,164,0.08); }
+
+/* --------------------------
+   Accessibility
+   -------------------------- */
+.visually-hidden {
+  position: absolute !important;
+  height: 1px; width: 1px;
+  overflow: hidden; clip: rect(1px,1px,1px,1px);
+  white-space: nowrap; border: 0; padding: 0; margin: -1px;
+}
+
+/* Gradient pill button like the one you sent */
+.btn-gradient {
+  background: linear-gradient(to right, var(--btn-grad-from), var(--btn-grad-to));
+  color: #fff;
+  position: relative;
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.btn-gradient:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+}
+
+/* little glowing dot on the left */
+.pulse-dot {
+  position: absolute;
+  left: 0.5rem;
+  width: 8px;
+  height: 8px;
+  background: rgba(255,255,255,0.9);
+  border-radius: 9999px;
+  animation: pulseRing 1.6s infinite ease-out;
+  box-shadow: 0 0 6px rgba(255,255,255,0.8);
+}
+
+/* ring animation */
+@keyframes pulseRing {
+  0%   { transform: scale(0.7); opacity: 0.9; }
+  50%  { transform: scale(1.4); opacity: 0.3; }
+  100% { transform: scale(0.7); opacity: 0.9; }
+}

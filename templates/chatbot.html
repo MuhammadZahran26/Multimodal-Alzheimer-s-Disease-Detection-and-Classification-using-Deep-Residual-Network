@@ -1,0 +1,55 @@
+<button class="chat-toggler" onclick="toggleChat()" 
+    style="position: fixed !important; bottom: 30px !important; right: 30px !important; z-index: 2147483647 !important; height: 60px; width: 60px; border-radius: 50%; background: linear-gradient(135deg, #0ea5a4, #7c3aed); border: none; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); transition: transform 0.2s;">
+    <i class="fas fa-comment-medical" style="font-size: 24px;"></i>
+</button>
+
+<div class="chat-container" id="chat-container" 
+    style="position: fixed !important; bottom: 100px !important; right: 30px !important; z-index: 2147483647 !important; display: none; width: 380px; height: 500px; max-height: 70vh !important; background: #fff; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); border: 1px solid #e2e8f0; flex-direction: column; overflow: hidden;">
+    
+    <div id="resize-handle" class="resize-handle" style="position: absolute; top: 0; left: 0; width: 15px; height: 15px; cursor: nwse-resize; z-index: 10;"></div>
+
+    <div class="chat-header" style="background: linear-gradient(135deg, #0ea5a4, #7c3aed); padding: 15px; color: white; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
+        <div class="header-title" style="display: flex; align-items: center; gap: 10px;">
+            <i class="fas fa-robot"></i>
+            <div class="header-text">
+                <h4 style="margin:0; font-weight: bold;">Medibot</h4>
+                <span style="font-size: 0.8rem; opacity: 0.9;">Alzheimer's Expert</span>
+            </div>
+        </div>
+        <button class="close-btn" onclick="toggleChat()" style="background: transparent; border: none; color: white; cursor: pointer;">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+    
+    <div id="chat-box" class="chat-box" style="flex: 1; padding: 15px; overflow-y: auto; background: #f8fafc; min-height: 0;">
+        <div class="message-row" style="display: flex; margin-bottom: 15px; align-items: flex-start;">
+            <div class="avatar bot-avatar" style="width:30px;height:30px;background:#e2e8f0;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-right:8px;flex-shrink:0;"><i class="fas fa-robot" style="color:#475569;"></i></div>
+            <div class="message-content-wrapper" style="max-width: 80%;">
+                <div class="message bot-msg" id="msg-welcome" style="background: #e2e8f0; color: #1e293b; padding: 10px 15px; border-radius: 15px 15px 15px 0; font-size: 0.9rem;">
+                    Hello! I am Medibot. How can I help you today?
+                </div>
+                <div class="msg-actions" style="margin-top: 4px;">
+                    <button class="speak-btn" onclick="speakMessage('msg-welcome', this)" style="border:none; background:transparent; color:#94a3b8; cursor:pointer;">
+                        <i class="fas fa-volume-up text-xs"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="typing" class="typing-indicator" style="display:none; padding: 10px; color: grey; font-size: 0.85rem; font-style: italic;">
+        <i class="fas fa-robot"></i> Thinking...
+    </div>
+
+    <form id="chat-form" class="input-area" style="padding: 10px; border-top: 1px solid #e2e8f0; background: #fff; display: flex; gap: 10px; flex-shrink: 0;">
+        <button type="button" id="mic-btn" class="mic-btn action-btn" style="background: #0ea5a4; color: white; border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display:flex; align-items:center; justify-content:center;">
+            <i class="fas fa-microphone"></i>
+        </button>
+
+        <input type="text" id="text" name="msg" class="form-control" placeholder="Ask a question..." autocomplete="off" required style="flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 20px; outline: none; font-size: 0.9rem;">
+        
+        <button type="submit" class="send-btn action-btn" style="background: #0ea5a4; color: white; border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display:flex; align-items:center; justify-content:center;">
+            <i class="fas fa-paper-plane"></i>
+        </button>
+    </form>
+</div>

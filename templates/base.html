@@ -1,0 +1,157 @@
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>MediCare AI</title>
+
+  <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#0ea5a4',
+            accent: '#7c3aed',
+          },
+          keyframes: {
+            floaty: {
+              '0%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(-8px)' },
+              '100%': { transform: 'translateY(0px)' },
+            }
+          },
+          animation: {
+            floaty: 'floaty 4s ease-in-out infinite',
+          },
+        }
+      }
+    }
+  </script>
+
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+  <style>
+    /* 1. Define Variables first */
+    :root {
+      --text-default: #0f1724;
+      --btn-grad-from: #0ea5a4;
+      --btn-grad-to: #7c3aed;
+    }
+
+    /* 2. Glass Effect Helper */
+    .glass {
+      background: rgba(255,255,255,0.75); /* Thora zyada white kia taake text parhay ja saky */
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255,255,255,0.4);
+    }
+
+    /* 3. Your Custom Background Code */
+    html, body { height: 100%; }
+    body {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      color: var(--text-default);
+      
+      /* Brain Background with Overlay */
+      background-image:
+        linear-gradient(180deg, rgba(255,255,255,0.85), rgba(245,247,250,0.95)),
+        url('/static/images/brain.jpg');
+      
+      background-attachment: fixed;
+      background-size: cover;
+      background-position: center;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-gray-50 text-slate-900 antialiased flex flex-col">
+
+  <header class="sticky top-0 z-50 glass shadow-sm">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        
+        <a href="{{ url_for('home') }}" class="flex items-center gap-3">
+         <div class="w-10 h-10 rounded-2xl flex items-center justify-center logo-mark animate-floaty"
+            style="background: linear-gradient(135deg,var(--btn-grad-from),var(--btn-grad-to));">
+              <img src="/static/images/mental-health.png" alt="Brain Logo" class="w-7 h-7 object-contain" />
+          </div>
+
+          <div>
+            <div class="text-lg font-semibold leading-tight">MediCare AI</div>
+            <div class="text-xs text-slate-600">Explainable cognitive diagnostics</div>
+          </div>
+        </a>
+
+        <nav class="hidden md:flex items-center gap-6">
+          
+          <a class="text-sm font-medium text-slate-600 hover:text-primary transition" href="{{ url_for('home') }}">Home</a>
+          <a class="text-sm font-medium text-slate-600 hover:text-primary transition" href="{{ url_for('how_it_works') }}">How it Works</a>
+          <a class="text-sm font-medium text-slate-600 hover:text-primary transition" href="{{ url_for('learn_more') }}">Learn More</a>
+          
+          {% if session.get('user_id') %}
+              {% if session.get('role') == 'patient' %}
+                <a class="text-sm font-bold text-primary hover:text-accent transition" href="{{ url_for('patient_dashboard') }}">My Dashboard</a>
+                <a class="text-sm font-medium text-slate-600 hover:text-primary transition" href="{{ url_for('upload_process') }}">Upload Scan</a>
+              
+              {% elif session.get('role') == 'doctor' %}
+                <a class="text-sm font-bold text-primary hover:text-accent transition" href="{{ url_for('doctor_dashboard') }}">Doctor Panel</a>
+              {% endif %}
+
+              <a class="text-sm font-medium text-red-500 hover:text-red-700 transition border border-red-200 px-3 py-1 rounded-full hover:bg-red-50" href="{{ url_for('logout') }}">Logout</a>
+
+          {% else %}
+              <a class="px-5 py-2.5 rounded-full bg-gradient-to-r from-primary to-accent text-white shadow-lg hover:shadow-xl hover:scale-105 transform transition text-sm font-bold" href="{{ url_for('select_role') }}">
+                Login / Signup
+              </a>
+          {% endif %}
+        </nav>
+
+        <div class="md:hidden">
+          <button class="text-slate-500 hover:text-slate-800 p-2">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-4">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="p-4 mb-4 rounded-xl shadow-sm border flex items-center gap-3 animate-pulse
+            {% if category == 'error' %}bg-red-50 border-red-200 text-red-700
+            {% else %}bg-green-50 border-green-200 text-green-700{% endif %}">
+            <span>{{ message }}</span>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  </div>
+
+  <main class="flex-grow">
+    {% block content %}
+    {% endblock %}
+  </main>
+
+  <footer class="mt-auto py-8 border-t border-slate-200 bg-white">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4">
+      <div class="text-sm text-slate-500">
+        © <span id="year"></span> MediCare AI. All rights reserved.
+      </div>
+      <div class="flex gap-6 text-sm text-slate-400">
+        <a href="{{ url_for('learn_more') }}" class="hover:text-primary transition">About</a>
+        <a href="#" class="hover:text-primary transition">Privacy</a>
+        <a href="#" class="hover:text-primary transition">Contact</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>

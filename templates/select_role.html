@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>MediCare — Select Role</title>
+
+  <!-- Tailwind + theme -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            mcblue: '#0ea5a4',
+            mcaccent: '#7c3aed',
+          },
+          keyframes: {
+            floaty: { '0%':{transform:'translateY(0)'}, '50%':{transform:'translateY(-6px)'}, '100%':{transform:'translateY(0)'} },
+            shine: { '0%':{transform:'translateX(-120%)'}, '100%':{transform:'translateX(120%)'} }
+          },
+          animation: {
+            floaty: 'floaty 4s ease-in-out infinite',
+            shine: 'shine 1.4s linear infinite'
+          }
+        }
+      }
+    }
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    :root{
+      --btn-grad-from:#0ea5a4;
+      --btn-grad-to:#7c3aed;
+    }
+
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;}
+    body{
+      color:#e6eef0;
+      background-image:
+        linear-gradient(180deg,rgba(2,6,7,0.70),rgba(2,6,7,0.80)),
+        url('/static/images/brain.jpg');
+      background-size:cover;
+      background-position:center;
+      background-attachment:fixed;
+    }
+
+    .panel{
+      width:100%;max-width:520px;
+      background:linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.02));
+      border:1px solid rgba(255,255,255,0.06);
+      border-radius:14px;
+      padding:2rem;
+      box-shadow:0 20px 60px rgba(0,0,0,0.55);
+      backdrop-filter:blur(6px);
+      margin:2rem;
+      position:relative;
+    }
+
+    .logo-mark{
+      width:48px;height:48px;border-radius:12px;
+      display:inline-flex;align-items:center;justify-content:center;
+      background:linear-gradient(135deg,var(--btn-grad-from),var(--btn-grad-to));
+      box-shadow:0 10px 36px rgba(2,6,23,0.25);
+    }
+
+    /* Unified gradient buttons */
+    .role-btn{
+      background:linear-gradient(135deg,var(--btn-grad-from),var(--btn-grad-to));
+      color:white;
+      font-weight:700;
+      border-radius:12px;
+      padding:1rem 1.1rem;
+      display:flex;
+      align-items:center;
+      width:100%;
+      gap:.7rem;
+      box-shadow:0 14px 40px rgba(2,6,23,0.28);
+      transition:transform .15s ease, box-shadow .15s ease;
+    }
+    .role-btn:hover{
+      transform:translateY(-3px);
+      box-shadow:0 22px 56px rgba(2,6,23,0.36);
+    }
+
+    /* Back button (icon only) */
+    .btn-back{
+      display:inline-flex;align-items:center;justify-content:center;
+      width:40px;height:40px;border-radius:8px;
+      background:rgba(255,255,255,0.06);
+      border:1px solid rgba(255,255,255,0.08);
+      position:absolute;
+      top:1rem;left:1rem;
+      transition:transform .12s ease, box-shadow .12s ease;
+    }
+    .btn-back:hover{
+      transform:translateY(-2px);
+      box-shadow:0 8px 26px rgba(2,6,23,0.15);
+    }
+
+    .muted{color:rgba(230,238,240,0.78);}
+  </style>
+</head>
+
+<body>
+  <div class="min-h-screen flex items-center justify-center px-4">
+    
+    <div class="panel" role="region" aria-labelledby="roleTitle">
+
+    <!-- Back icon -->
+    <a href="{{ url_for('home') }}" class="btn-back" aria-label="Go back">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="stroke:#e6eef0">
+        <path d="M15 18l-6-6 6-6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </a>
+
+    <!-- Logo -->
+    <div class="flex items-center gap-4 mb-6 mt-6 ml-12">
+      <div class="logo-mark animate-floaty">
+          <img src="/static/images/mental-health.png" alt="MediCare logo" class="w-7 h-7 object-contain"/>
+        </div>
+
+        <div>
+          <div class="text-xl font-semibold">MediCare <span style="color:var(--btn-grad-to)">AI</span></div>
+          <div class="text-xs muted -mt-0.5">Explainable cognitive diagnostics</div>
+        </div>
+      </div>
+
+      <h2 id="roleTitle" class="text-2xl font-extrabold mb-1">Select Your Role</h2>
+      <p class="muted mb-6">Choose how you would like to continue.</p>
+
+      <div class="space-y-4">
+
+        <!-- Patient (same design as doctor) -->
+        <a href="{{ url_for('patient_login') }}" class="block">
+          <button class="role-btn">
+            <span>I'm a Patient</span>
+            <svg width="18" height="18" fill="none" viewBox="0 0 24 24" class="ml-auto" style="stroke:white;">
+              <path d="M4 12h16" stroke-width="2" stroke-linecap="round"/>
+              <path d="M12 4v16" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </a>
+
+        <!-- Doctor (now 100% same design) -->
+        <a href="{{ url_for('doctor_login') }}" class="block">
+          <button class="role-btn">
+            <span>I'm a Doctor</span>
+            <svg width="18" height="18" fill="none" viewBox="0 0 24 24" class="ml-auto" style="stroke:white;">
+              <path d="M4 12h16" stroke-width="2" stroke-linecap="round"/>
+              <path d="M12 4v16" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </a>
+
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>

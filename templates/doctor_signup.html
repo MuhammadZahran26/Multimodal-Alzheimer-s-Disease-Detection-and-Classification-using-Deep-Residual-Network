@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Create Doctor Account — MediCare AI</title>
+
+  <!-- Tailwind + small theme extension -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#0ea5a4',
+            accent: '#7c3aed'
+          },
+          keyframes: {
+            floaty: { '0%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-6px)' }, '100%': { transform: 'translateY(0)' } },
+            slowFade: { '0%': { opacity: 0, transform: 'translateY(8px)' }, '100%': { opacity: 1, transform: 'translateY(0)' } },
+            shine: { '0%': { transform: 'translateX(-120%)' }, '100%': { transform: 'translateX(120%)' } }
+          },
+          animation: {
+            floaty: 'floaty 6s ease-in-out infinite',
+            slowFade: 'slowFade .6s cubic-bezier(.2,.9,.2,1) both',
+            shine: 'shine 1.6s linear infinite'
+          }
+        }
+      }
+    }
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <meta name="theme-color" content="#0ea5a4" />
+
+  <style>
+    :root{
+      --btn-grad-from: #0ea5a4;
+      --btn-grad-to:   #7c3aed;
+      --text-light:    #e6eef0;
+    }
+
+    html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+    body{
+      background-image: linear-gradient(180deg, rgba(3,7,7,0.72), rgba(3,7,7,0.88)), url('/static/images/brain.jpg');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      color: var(--text-light);
+    }
+
+    .page-wrap { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:3rem 1rem; }
+
+    .signup-card {
+      width:100%; max-width:640px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 14px;
+      padding: 2rem;
+      box-shadow: 0 20px 60px rgba(2,6,23,0.6);
+      backdrop-filter: blur(6px);
+    }
+
+    .logo-mark {
+      width:48px; height:48px; border-radius:12px;
+      display:inline-flex; align-items:center; justify-content:center;
+      background: linear-gradient(135deg,var(--btn-grad-from),var(--btn-grad-to));
+      box-shadow: 0 10px 36px rgba(2,6,23,0.22);
+    }
+
+    h1{ color: #fff; margin:0; font-size:1.375rem; font-weight:800; }
+    .lead { color: rgba(230,238,240,0.78); margin-top:.25rem; }
+
+    .form-input {
+      width:100%; padding:.62rem .9rem; border-radius:10px;
+      border:1px solid rgba(255,255,255,0.06);
+      background: rgba(255,255,255,0.02); color:var(--text-light);
+      font-size:0.95rem; transition: box-shadow .12s, border-color .12s, transform .06s;
+    }
+    .form-input::placeholder{ color: rgba(230,238,240,0.42); }
+    .form-input:focus{ outline:none; border-color: var(--btn-grad-from); box-shadow: 0 10px 30px rgba(14,165,164,0.06); transform: translateY(-1px); }
+
+    .btn-primary {
+      display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
+      width:100%; padding:.78rem 1rem; border-radius:10px; border:none; cursor:pointer;
+      font-weight:700; font-size:1.03rem;
+      background: linear-gradient(135deg,var(--btn-grad-from),var(--btn-grad-to));
+      color:#fff; box-shadow: 0 14px 40px rgba(2,6,23,0.28);
+      position:relative; overflow:hidden; transition: transform .12s ease, box-shadow .12s ease;
+    }
+    .btn-primary:hover{ transform: translateY(-3px); box-shadow: 0 22px 56px rgba(2,6,23,0.36); }
+    .btn-primary .shine { position:absolute; inset:0; pointer-events:none; }
+    .btn-primary .shine::after {
+      content:''; position:absolute; top:-40%; left:-40%; width:180%; height:180%; transform:rotate(12deg);
+      opacity:0.12; background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.75) 50%, rgba(255,255,255,0) 100%);
+      animation: shine 1.6s linear infinite;
+    }
+
+    .btn-back {
+      display:inline-flex; align-items:center; gap:.5rem; padding:.45rem .75rem; border-radius:8px;
+      border:1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.02); color:var(--text-light);
+      text-decoration:none; font-weight:600; transition: transform .12s, box-shadow .12s;
+    }
+    .btn-back:hover{ transform: translateY(-2px); box-shadow: 0 8px 26px rgba(2,6,23,0.12); }
+
+    .muted { color: rgba(230,238,240,0.72); }
+    .small { font-size:.88rem; color: rgba(230,238,240,0.7); }
+    .form-error { color:#ffb4b4; font-size:0.92rem; margin-top:.5rem; display:none; }
+
+    .checkbox { accent-color: var(--btn-grad-from); width:1rem; height:1rem; }
+
+    .reveal { animation: slowFade .42s cubic-bezier(.2,.9,.2,1) both; }
+    @media (max-width:640px) { .two-col { display:block; } .two-col > div { width:100%; } }
+
+    .focus-ring:focus { outline: 3px solid rgba(14,165,164,0.12); outline-offset: 3px; border-radius: 10px; }
+  </style>
+</head>
+<body>
+  <div class="page-wrap">
+    <main class="signup-card reveal" role="main" aria-labelledby="signupTitle">
+
+      <!-- header row -->
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <a href="{{ url_for('doctor_login_page') }}" class="btn-back" aria-label="Back to sign in">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden style="stroke:currentColor">
+              <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+            Back
+          </a>
+        </div>
+        <div class="text-xs muted">Secure • HIPAA-aware</div>
+      </div>
+
+      <!-- logo + heading -->
+      <div class="mb-6 flex items-start gap-4">
+        <div class="logo-mark" aria-hidden="true">
+          <img src="/static/images/mental-health.png" alt="MediCare logo" class="w-7 h-7 object-contain">
+        </div>
+        <div>
+          <h1 id="signupTitle">Create Doctor account</h1>
+          <p class="lead small">Sign up as a healthcare provider to access patient scans, triage and monitoring tools.</p>
+        </div>
+      </div>
+
+      <!-- form -->
+      <form id="doctorSignupForm" action="/signup/doctor" method="POST">
+        <!-- name row -->
+        <div class="flex gap-4 two-col mb-4">
+          <div style="flex:1;">
+            <label for="first-name" class="text-sm font-medium muted">First name</label>
+            <input id="first-name" name="first_name" type="text" required autocomplete="given-name" placeholder="Muhammad" class="form-input mt-2 focus-ring" />
+          </div>
+          <div style="flex:1;">
+            <label for="last-name" class="text-sm font-medium muted">Last name</label>
+            <input id="last-name" name="last_name" type="text" required autocomplete="family-name" placeholder="Khan" class="form-input mt-2 focus-ring" />
+          </div>
+        </div>
+        <!-- username -->
+         <div class="mb-4">
+            <label class="text-sm font-medium muted">Username</label>
+            <input name="username" type="text" required placeholder="dr_khan" class="form-input mt-2 focus-ring"/>
+          </div>
+
+        <!-- email -->
+        <div class="mb-4">
+          <label for="email" class="text-sm font-medium muted">Email address</label>
+          <input id="email" name="email" type="email" required autocomplete="email" placeholder="you@hospital.org" class="form-input mt-2 focus-ring" />
+          <div id="emailError" class="form-error">Please enter a valid email address.</div>
+        </div>
+
+        <!-- contact -->
+        <div class="mb-4">
+          <label for="contact" class="text-sm font-medium muted">Contact (phone)</label>
+          <input id="contact" name="contact" type="tel" placeholder="+1 (555) 123-4567" class="form-input mt-2 focus-ring" />
+        </div>
+
+        <!-- location -->
+        <div class="flex gap-4 two-col mb-4">
+          <div style="flex:1;">
+            <label for="country" class="text-sm font-medium muted">Country</label>
+            <input id="country" name="country" type="text" placeholder="USA" class="form-input mt-2 focus-ring" />
+          </div>
+          <div style="flex:1;">
+            <label for="city" class="text-sm font-medium muted">City</label>
+            <input id="city" name="city" type="text" placeholder="New York" class="form-input mt-2 focus-ring" />
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <label for="postal_code" class="text-sm font-medium muted">Postal code</label>
+          <input id="postal_code" name="postal_code" type="text" placeholder="10001" class="form-input mt-2 focus-ring" />
+        </div>
+
+        <!-- NOTE: license + upload fields removed as requested -->
+
+        <!-- password -->
+        <div class="mb-4">
+          <label for="password" class="text-sm font-medium muted">Password</label>
+          <input id="password" name="password" type="password" required minlength="8" placeholder="Min 8 characters" class="form-input mt-2 focus-ring" />
+          <div id="pwdTips" class="small" style="margin-top:.45rem">Use at least 8 characters with uppercase, lowercase and numbers.</div>
+          <div id="pwdStrength" class="form-error" style="display:none;"></div>
+        </div>
+
+        <div class="mb-4">
+          <label for="confirm-password" class="text-sm font-medium muted">Confirm password</label>
+          <input id="confirm-password" name="confirm_password" type="password" required minlength="8" placeholder="Repeat password" class="form-input mt-2 focus-ring" />
+          <div id="confirmError" class="form-error">Passwords do not match</div>
+        </div>
+
+        <div class="mb-4 flex items-center gap-3">
+          <input id="terms" name="terms" type="checkbox" class="checkbox" />
+          <label for="terms" class="small muted">I agree to the <a href="#" style="color:var(--btn-grad-from);" class="underline">Terms of Service</a> and HIPAA policy.</label>
+        </div>
+
+        <div class="mb-4">
+          <button id="createBtn" type="submit" class="btn-primary focus-ring" aria-live="polite">
+            Create Account
+            <span class="shine" aria-hidden="true"></span>
+          </button>
+        </div>
+      </form>
+
+      <div class="mt-2 pt-4 border-t border-white/6 text-center">
+        <p class="text-sm muted">Already have an account? <a href="{{ url_for('doctor_login_page') }}" style="color:var(--btn-grad-from); font-weight:600">Sign in</a></p>
+        <p class="mt-3 text-xs muted">HIPAA Compliant • Encrypted connection • Audit logging</p>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    (function(){
+      const form = document.getElementById('doctorSignupForm');
+      const email = document.getElementById('email');
+      const pwd = document.getElementById('password');
+      const confirm = document.getElementById('confirm-password');
+      const createBtn = document.getElementById('createBtn');
+      const emailError = document.getElementById('emailError');
+      const pwdStrength = document.getElementById('pwdStrength');
+      const confirmError = document.getElementById('confirmError');
+
+      function show(el, msg) { if(!el) return; el.style.display = 'block'; if(msg!==undefined) el.textContent = msg; }
+      function hide(el) { if(!el) return; el.style.display = 'none'; el.textContent = ''; }
+
+      function validEmail(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+
+      function passwordScore(value) {
+        let score = 0;
+        if (value.length >= 8) score++;
+        if (/[A-Z]/.test(value)) score++;
+        if (/[a-z]/.test(value)) score++;
+        if (/[0-9]/.test(value)) score++;
+        if (/[\W_]/.test(value)) score++;
+        return score;
+      }
+      function strengthText(score) {
+        if (score <= 1) return {txt: 'Very weak', color: '#ff4d4f'};
+        if (score === 2) return {txt: 'Weak', color: '#ff7a59'};
+        if (score === 3) return {txt: 'Okay', color: '#ffb84d'};
+        if (score === 4) return {txt: 'Strong', color: '#8ad36a'};
+        return {txt: 'Very strong', color: '#2bd36a'};
+      }
+
+      pwd.addEventListener('input', () => {
+        const v = pwd.value || '';
+        if (!v) { hide(pwdStrength); return; }
+        const s = passwordScore(v);
+        const st = strengthText(s);
+        pwdStrength.style.display = 'block';
+        pwdStrength.textContent = 'Strength: ' + st.txt;
+        pwdStrength.style.color = st.color;
+      });
+
+      confirm.addEventListener('input', () => {
+        if (!confirm.value) { hide(confirmError); return; }
+        if (confirm.value !== pwd.value) show(confirmError, 'Passwords do not match');
+        else hide(confirmError);
+      });
+
+      // form.addEventListener('submit', async (e) => {
+      //   e.preventDefault();
+
+      //   hide(emailError); 
+      //   hide(pwdStrength); 
+      //   hide(confirmError);
+
+      //   // VALIDATIONS (keep your existing logic)
+      //   if (!email.value || !validEmail(email.value.trim())) {
+      //     show(emailError, 'Please enter a valid email address.');
+      //     return;
+      //   }
+      //   if (!pwd.value || pwd.value.length < 8) {
+      //     show(pwdStrength, 'Password must be at least 8 characters.');
+      //     return;
+      //   }
+      //   if (pwd.value !== confirm.value) {
+      //     show(confirmError, 'Passwords do not match.');
+      //     return;
+      //   }
+      //   const terms = document.getElementById('terms');
+      //   if (!terms.checked) {
+      //     alert('Please agree to the Terms of Service and HIPAA policy to continue.');
+      //     return;
+      //   }
+
+      //   // Start loading state
+      //   createBtn.disabled = true;
+      //   createBtn.style.opacity = '0.9';
+      //   const originalText = createBtn.innerHTML;
+      //   createBtn.innerHTML = `
+      //     <svg width="18" height="18" viewBox="0 0 50 50" style="margin-right:8px">
+      //       <path fill="none" stroke="#fff" stroke-width="4" d="M25 5a20 20 0 1 1 0 40" />
+      //       <animateTransform attributeName="transform" type="rotate"
+      //         from="0 25 25" to="360 25 25" dur="1s" repeatCount="indefinite" />
+      //     </svg>
+      //     Creating...
+      //   `;
+
+      //   // SEND TO FLASK BACKEND
+      //   try {
+      //     const formData = new FormData(form);
+
+      //     const response = await fetch("{{ url_for('doctor_signup') }}", {
+      //       method: "POST",
+      //       body: formData
+      //     });
+
+      //     if (response.redirected) {
+      //       // Flask redirects -> follow
+      //       window.location.href = response.url;
+      //       return;
+      //     }
+
+      //     const text = await response.text();
+      //     console.log("Server returned HTML:", text);
+      //     alert("Unexpected response. Check console for details.");
+      //   }
+
+      //   catch (err) {
+      //     console.error(err);
+      //     alert("Error contacting server. Please try again.");
+      //   }
+
+      //   finally {
+      //     createBtn.disabled = false;
+      //     createBtn.style.opacity = '';
+      //     createBtn.innerHTML = originalText;
+      //   }
+      // });
+
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          hide(emailError); hide(pwdStrength); hide(confirmError);
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

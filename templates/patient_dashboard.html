@@ -1,0 +1,508 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Patient Dashboard — MediCare AI</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#0ea5a4',
+            accent: '#7c3aed',
+            brandBlue: '#0052cc',
+            slateDark: '#0f1724'
+          },
+          animation: {
+            'fadeIn': 'fadeIn 0.6s ease-out forwards',
+            'slideUp': 'slideUp 0.6s ease-out forwards',
+          },
+          keyframes: {
+            fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+            slideUp: { '0%': { opacity: '0', transform: 'translateY(15px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-image:
+        linear-gradient(180deg, rgba(255,255,255,0.92), rgba(245,247,250,0.96)),
+        url('/static/images/brain.jpg'); 
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      font-family: 'Inter', sans-serif;
+      color: #1e293b;
+    }
+
+    .glass-card {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    }
+
+    /* Badge Colors */
+    .badge-AD { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+    .badge-MCI { background: #ffedd5; color: #9a3412; border: 1px solid #fed7aa; }
+    .badge-CN { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; } /* CN for Normal */
+    .badge-PENDING { background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; }
+
+    /* Modal Animation */
+    .modal-enter { animation: modalIn 0.3s ease-out forwards; }
+    @keyframes modalIn {
+        from { opacity: 0; transform: scale(0.95) translateY(10px); }
+        to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+  </style>
+
+<style>
+    /* --- MEDIBOT CHAT STYLES --- */
+    .chat-toggler {
+        position: fixed !important;
+        bottom: 30px !important;
+        right: 30px !important;
+        height: 60px;
+        width: 60px;
+        background: linear-gradient(135deg, #0ea5a4, #7c3aed);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        transition: transform 0.2s ease;
+        z-index: 2147483647 !important; /* Maximum z-index */
+    }
+    .chat-toggler:hover { transform: scale(1.1); }
+    
+    #chat-container {
+        position: fixed !important;
+        bottom: 100px !important;
+        right: 30px !important;
+        width: 380px;
+        height: 500px;
+        max-height: 70vh !important; /* Responsive height */
+        background: #fff;
+        border-radius: 15px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        display: none;
+        flex-direction: column;
+        overflow: hidden;
+        z-index: 2147483647 !important;
+        border: 1px solid #e2e8f0;
+        animation: slideIn 0.3s ease;
+    }
+    
+    @keyframes slideIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+
+    /* Internal Elements */
+    .chat-header { background: linear-gradient(135deg, #0ea5a4, #7c3aed); padding: 15px; color: white; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+    .chat-header h4 { margin: 0; font-size: 1.1rem; font-weight: 700; }
+    .chat-header span { font-size: 0.8rem; opacity: 0.9; }
+    
+    .chat-box { flex: 1; padding: 15px; overflow-y: auto; background: #f8fafc; min-height: 0; }
+    
+    .message-row { display: flex; margin-bottom: 15px; align-items: flex-start; }
+    .user-msg { margin-left: auto; background: #0ea5a4; color: white; padding: 10px 15px; border-radius: 15px 15px 0 15px; max-width: 80%; font-size: 0.9rem; }
+    .bot-msg { background: #e2e8f0; color: #1e293b; padding: 10px 15px; border-radius: 15px 15px 15px 0; max-width: 80%; font-size: 0.9rem; }
+    
+    .input-area { padding: 10px; border-top: 1px solid #e2e8f0; background: #fff; display: flex; gap: 10px; flex-shrink: 0; }
+    .input-area input { flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 20px; outline: none; font-size: 0.9rem; }
+    .send-btn, .mic-btn { background: #0ea5a4; color: white; border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display:flex; align-items:center; justify-content:center; }
+    .mic-btn.active { background: #ef4444; animation: pulse 1.5s infinite; }
+    .close-btn { background:transparent; border:none; color:white; font-size:1.2rem; cursor:pointer; }
+    
+    /* Mobile Fix */
+    @media (max-width: 480px) {
+        #chat-container { width: 90%; right: 5%; bottom: 90px; height: 70vh; }
+    }
+</style>
+
+</head>
+<body class="min-h-screen p-4 md:p-8">
+  <div class="max-w-7xl mx-auto space-y-6">
+
+    <nav class="glass-card rounded-2xl px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4 animate-[fadeIn_0.5s]">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/20 text-white">
+                <img src="/static/images/mental-health.png" alt="MediCare AI Logo" class="w-6 h-6 object-contain drop-shadow-sm">
+            </div>
+            <div>
+                <h1 class="text-xl font-bold text-slate-800">MediCare AI</h1>
+                <p class="text-xs text-slate-500 font-medium uppercase tracking-wide">Patient Portal</p>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-4">
+            <a href="{{ url_for('home') }}" class="text-sm font-semibold text-slate-500 hover:text-primary transition-colors">Home</a>
+            <a href="{{ url_for('logout') }}" class="text-sm font-semibold text-slate-500 hover:text-red-500 transition-colors">Logout</a>
+            <a href="{{ url_for('upload_process') }}" class="bg-primary hover:bg-teal-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-md hover:shadow-lg transition-all flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                Upload Scan
+            </a>
+        </div>
+    </nav>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <aside class="lg:col-span-4 space-y-6 animate-[slideUp_0.5s]">
+            
+            <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm text-center relative overflow-hidden group">
+                <div class="absolute top-0 left-0 w-full h-20 bg-gradient-to-r from-primary/10 to-accent/10 group-hover:h-24 transition-all duration-500"></div>
+                <div class="relative mt-4">
+                    <div class="w-24 h-24 mx-auto bg-white rounded-full p-1.5 shadow-xl mb-3">
+                        <div class="w-full h-full rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-3xl font-bold text-white uppercase">
+                            {{ (patient.full_name[0] if patient and patient.full_name else user.username[0]) | upper }}
+                        </div>
+                    </div>
+                    <h2 class="text-xl font-bold text-slate-800">{{ patient.full_name if patient else user.username }}</h2>
+                    <p class="text-sm text-slate-500 mb-4">{{ user.email }}</p>
+                    
+                    <div class="inline-flex items-center gap-2 bg-green-50 text-green-700 px-3 py-1 rounded-full text-xs font-bold border border-green-100">
+                        <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                        Active Account
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div class="bg-white p-5 rounded-xl border border-slate-100 shadow-sm text-center hover:border-primary/30 transition-colors">
+                    <div class="text-3xl font-bold text-slate-800">{{ scans|length }}</div>
+                    <div class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mt-1">Total Scans</div>
+                </div>
+                <div class="bg-white p-5 rounded-xl border border-slate-100 shadow-sm text-center hover:border-green-400/30 transition-colors">
+                    <div class="text-3xl font-bold text-green-600">{{ scans|selectattr('prediction','equalto','CN')|list|length }}</div>
+                    <div class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mt-1">Normal Results</div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
+                <h3 class="text-sm font-bold text-slate-700 mb-6 uppercase tracking-wider border-b border-slate-50 pb-2">Recent Activity</h3>
+                <div class="space-y-6 relative border-l-2 border-slate-100 ml-3 pl-6">
+                    {% for sc in scans[:4] %}
+                    <div class="relative group">
+                        <div class="absolute -left-[31px] top-1.5 w-4 h-4 rounded-full border-2 border-white shadow-sm transition-transform group-hover:scale-125
+                            {% if sc.prediction == 'AD' %} bg-red-500
+                            {% elif sc.prediction == 'MCI' %} bg-orange-500
+                            {% else %} bg-green-500 {% endif %}">
+                        </div>
+                        <div class="text-sm font-bold text-slate-800 group-hover:text-primary transition-colors">Scan Processed</div>
+                        <div class="text-xs text-slate-500 mt-0.5">
+                            {{ sc.created_at.strftime('%b %d') if sc.created_at else 'Just now' }} • Result: {{ sc.prediction }}
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4 text-slate-400 text-xs italic">No activity yet. Upload a scan to start.</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </aside>
+
+        <main class="lg:col-span-8 space-y-6 animate-[slideUp_0.7s]">
+            <div class="glass-card rounded-2xl p-6 min-h-[600px]">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-800">Medical History</h2>
+                        <p class="text-sm text-slate-500">Your secure digital records.</p>
+                    </div>
+                    <button id="refreshBtn" onclick="location.reload()" class="bg-white border border-slate-200 text-slate-600 hover:text-primary hover:border-primary px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm">
+                        Refresh List
+                    </button>
+                </div>
+
+                <div class="space-y-4">
+                    {% if scans %}
+                        {% for sc in scans %}
+                        <div class="bg-white rounded-xl p-5 border border-slate-100 shadow-sm hover:shadow-md hover:border-primary/20 transition-all duration-300 group flex flex-col sm:flex-row gap-5 items-start sm:items-center scan-card"
+                             data-scan-id="{{ sc.id }}" 
+                             data-file="{{ sc.file_path }}" 
+                             data-result="{{ sc.prediction }}" 
+                             data-confidence="{{ sc.confidence_score }}" 
+                             data-uploaded="{{ sc.created_at.strftime('%b %d, %Y') }}"
+                             data-patient="{{ patient.full_name }}">
+                            
+                            <div class="w-14 h-14 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-primary group-hover:text-white transition-colors shrink-0 shadow-inner">
+                                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                            </div>
+
+                            <div class="flex-1 min-w-0">
+                                <h3 class="text-sm font-bold text-slate-800 truncate">Scan #{{ sc.id }} - {{ sc.scan_type }}</h3>
+                                <div class="flex items-center gap-2 mt-1.5">
+                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide
+                                        {% if sc.prediction == 'AD' %} badge-AD
+                                        {% elif sc.prediction == 'MCI' %} badge-MCI
+                                        {% else %} badge-CN {% endif %}">
+                                        {{ sc.prediction }}
+                                    </span>
+                                    <span class="text-xs text-slate-400">{{ sc.created_at.strftime('%b %d, %Y') }}</span>
+                                </div>
+                            </div>
+
+                            <div class="w-full sm:w-36 hidden sm:block">
+                                <div class="flex justify-between text-[10px] font-bold text-slate-500 mb-1">
+                                    <span>AI Confidence</span>
+                                    <span>{{ sc.confidence_score }}%</span>
+                                </div>
+                                <div class="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                                    <div class="h-full rounded-full bg-slate-600 group-hover:bg-primary transition-colors" 
+                                         style="width: {{ sc.confidence_score }}%"></div>
+                                </div>
+                            </div>
+
+                            <div class="flex gap-2 w-full sm:w-auto">
+                                <button class="viewBtn flex-1 sm:flex-none px-4 py-2 bg-slate-50 hover:bg-slate-100 text-slate-600 text-xs font-bold rounded-lg transition-colors border border-slate-200">
+                                    Details
+                                </button>
+                                
+                                <a href="{{ url_for('view_result', scan_id=sc.id) }}" target="_blank" 
+                                   class="flex-1 sm:flex-none px-4 py-2 bg-white text-primary hover:bg-primary hover:text-white text-xs font-bold rounded-lg transition-colors border border-primary/20 flex items-center justify-center gap-1">
+                                    Report
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                                </a>
+                            </div>
+
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="flex flex-col items-center justify-center py-20 bg-slate-50/50 rounded-2xl border-2 border-dashed border-slate-200">
+                            <h3 class="text-slate-800 font-bold text-lg">No scans yet</h3>
+                            <a href="{{ url_for('upload_process') }}" class="mt-4 bg-primary text-white px-6 py-2 rounded-lg text-sm font-bold shadow-md hover:bg-teal-600 transition-colors">Start Upload</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </main>
+    </div>
+  </div>
+
+  <div id="modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="bg-white w-full max-w-2xl rounded-2xl shadow-2xl modal-enter overflow-hidden flex flex-col max-h-[90vh]">
+        
+        <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/80">
+            <div>
+                <h3 class="text-lg font-bold text-slate-800">Scan Details</h3>
+                <p id="modalSubtitle" class="text-xs text-slate-500">Date</p>
+            </div>
+            <button id="modalClose" class="w-8 h-8 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400 hover:text-red-500 hover:border-red-200 transition-colors">✕</button>
+        </div>
+
+        <div class="p-6 overflow-y-auto">
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="bg-slate-100 rounded-xl overflow-hidden aspect-square flex items-center justify-center relative border border-slate-200">
+                    <div id="modalPreview" class="w-full h-full flex items-center justify-center"></div>
+                </div>
+
+                <div class="space-y-6">
+                    <div>
+                        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Analysis Result</div>
+                        <div class="flex items-center gap-3">
+                            <span id="modalResult" class="text-3xl font-bold text-slate-800">--</span>
+                            <span id="modalConfidence" class="bg-slate-100 text-slate-600 px-2 py-1 rounded text-xs font-bold border border-slate-200">--%</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-2">
+                        <div class="flex justify-between border-b border-slate-200 pb-2">
+                            <span class="text-xs text-slate-500">Patient Name</span>
+                            <span id="modalPatient" class="text-xs font-bold text-slate-700">--</span>
+                        </div>
+                        <div class="flex justify-between pt-1">
+                            <span class="text-xs text-slate-500">Scan Type</span>
+                            <span class="text-xs font-bold text-slate-700">MRI / Fusion</span>
+                        </div>
+                    </div>
+
+                    <a id="modalOpenLink" href="#" class="w-full bg-slate-800 text-white py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 hover:bg-slate-700 transition-colors shadow-lg shadow-slate-200">
+                        View Full Report
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+  </div>
+
+  <script>
+    const modal = document.getElementById('modal');
+    const modalSubtitle = document.getElementById('modalSubtitle');
+    const modalResult = document.getElementById('modalResult');
+    const modalConfidence = document.getElementById('modalConfidence');
+    const modalPatient = document.getElementById('modalPatient');
+    const modalPreview = document.getElementById('modalPreview');
+    const modalOpenLink = document.getElementById('modalOpenLink');
+
+    function openModal(data){
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        
+        // Populate Data
+        modalSubtitle.textContent = "Uploaded: " + (data.uploaded || '--');
+        modalResult.textContent = data.result || 'Pending';
+        modalConfidence.textContent = (data.confidence || '0') + '%';
+        modalPatient.textContent = data.patient || 'Unknown';
+        
+        // Fix color for Result
+        modalResult.className = "text-3xl font-bold " + 
+            (data.result === 'AD' ? "text-red-600" : data.result === 'MCI' ? "text-orange-500" : "text-green-600");
+
+        // Link to full report - Correctly uses Flask route format
+        modalOpenLink.href = "/results/" + data.scanId;
+
+        // Image Preview Logic (Assumes file_path is relative like 'uploads/file.nii')
+        // We handle path logic to work if it already includes uploads/ or not
+        let cleanPath = (data.file || '');
+        // If your main.py saves as "uploads/filename", Flask usually serves static/uploads if configured, 
+        // OR you might need a route to serve uploads. 
+        // Assuming typical setup: static/uploads/filename
+        if (cleanPath.startsWith('uploads/')) cleanPath = cleanPath.replace('uploads/', '');
+        
+        const fileUrl = '/static/uploads/' + cleanPath; // This assumes your files are moved to static/uploads
+
+        // Simple check for images
+        const ext = cleanPath.split('.').pop().toLowerCase();
+        if(['png','jpg','jpeg','gif'].includes(ext)){
+            modalPreview.innerHTML = `<img src="${fileUrl}" class="w-full h-full object-cover">`;
+        } else {
+            // Placeholder for NIfTI/DICOM
+            modalPreview.innerHTML = `
+                <div class="text-center p-4">
+                    <svg class="w-12 h-12 text-slate-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    <div class="text-slate-500 text-xs font-semibold">Medical Scan File</div>
+                    <div class="text-slate-400 text-[10px] mt-1">${cleanPath}</div>
+                </div>`;
+        }
+    }
+
+    function closeModal(){
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+
+    document.querySelectorAll('.viewBtn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const card = e.target.closest('.scan-card');
+            if(card) openModal(card.dataset);
+        });
+    });
+
+    document.getElementById('modalClose').addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => { if(e.target === modal) closeModal(); });
+    document.addEventListener('keydown', (e) => { if(e.key === 'Escape') closeModal(); });
+  </script>
+  <div id="medibot-wrapper" style="position: relative; z-index: 2147483647;">
+    {% include 'chatbot.html' %}
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        
+        // --- CONFIGURATION ---
+        const chatContainer = document.getElementById("chat-container");
+        const chatBox = document.getElementById("chat-box");
+        const chatForm = document.getElementById("chat-form");
+        const chatInput = document.getElementById("text");
+        const micBtn = document.getElementById("mic-btn");
+        const resizeHandle = document.getElementById("resize-handle");
+        const typingIndicator = document.getElementById("typing");
+
+        // Session ID
+        let sessionId = localStorage.getItem("chat_session_id");
+        if (!sessionId) {
+            sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem("chat_session_id", sessionId);
+        }
+
+        // --- TOGGLE CHAT ---
+        window.toggleChat = function() {
+            if (chatContainer.style.display === "flex") {
+                chatContainer.style.display = "none";
+            } else {
+                chatContainer.style.display = "flex";
+                if(window.innerWidth < 768) {
+                    chatContainer.style.width = "90%";
+                    chatContainer.style.height = "70vh";
+                }
+            }
+        };
+
+        // --- APPEND MESSAGES ---
+        function appendMessage(content, sender) {
+            const div = document.createElement("div");
+            div.className = "message-row";
+            const uniqueId = "msg-" + Date.now();
+
+            if (sender === 'user') {
+                div.innerHTML = `
+                    <div class="user-msg">${content}</div>
+                    <div class="avatar user-avatar" style="width:30px;height:30px;background:#0ea5a4;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-left:8px;color:white;"><i class="fas fa-user"></i></div>
+                `;
+            } else {
+                const htmlContent = marked.parse(content);
+                div.innerHTML = `
+                    <div class="avatar bot-avatar" style="width:30px;height:30px;background:#e2e8f0;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-right:8px;flex-shrink:0;"><i class="fas fa-robot text-slate-600"></i></div>
+                    <div class="message-content-wrapper" style="max-width: 80%;">
+                        <div class="bot-msg prose prose-sm max-w-none text-slate-800" id="${uniqueId}">${htmlContent}</div>
+                        <div class="msg-actions" style="margin-top: 4px;">
+                            <button class="speak-btn text-slate-400 hover:text-primary transition-colors" onclick="speakMessage('${uniqueId}', this)">
+                                <i class="fas fa-volume-up text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        // --- SEND LOGIC ---
+        if(chatForm){
+            chatForm.addEventListener("submit", async (e) => {
+                e.preventDefault();
+                const msg = chatInput.value.trim();
+                if (!msg) return;
+
+                appendMessage(msg, "user");
+                chatInput.value = "";
+                typingIndicator.style.display = "block";
+                chatBox.scrollTop = chatBox.scrollHeight;
+
+                try {
+                    const formData = new FormData();
+                    formData.append("msg", msg);
+                    formData.append("session_id", sessionId);
+
+                    const response = await fetch("/get_response", { method: "POST", body: formData });
+                    const data = await response.json();
+
+                    typingIndicator.style.display = "none";
+                    if(data.response) appendMessage(data.response, "bot");
+                    else appendMessage("⚠️ Error: No response received.", "bot");
+
+                } catch (err) {
+                    console.error(err);
+                    typingIndicator.style.display = "none";
+                    appendMessage("⚠️ Network Error.", "bot");
+                }
+            });
+        }
+
+        // --- SPEECH & MIC LOGIC ---
+        // (Include the speech synthesis and mic logic from home.html if needed)
+        // For brevity, the core chat logic is above.
+    });
+</script>
+</body>
+</body>
+</html>

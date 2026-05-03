@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
+    
+    <nav class="flex mb-6" aria-label="Breadcrumb">
+        <a href="{{ url_for('home') }}" class="text-sm font-medium text-slate-500 hover:text-primary transition-colors flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+            Back to Dashboard
+        </a>
+    </nav>
+
+    <div class="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl overflow-hidden border border-white/50">
+        
+        <div class="relative bg-gradient-to-r from-[var(--btn-grad-from)] to-[var(--btn-grad-to)] p-8 sm:p-12 text-white">
+            <div class="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-white opacity-10 rounded-full blur-2xl"></div>
+            
+            <h1 class="relative text-3xl sm:text-4xl font-extrabold tracking-tight">
+                {{ content.title }}
+            </h1>
+            <p class="relative mt-2 text-blue-50 text-sm font-medium flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path></svg>
+                Source: External Medical Database
+            </p>
+        </div>
+
+        <div class="p-8 sm:p-12">
+            <div class="prose prose-lg prose-slate max-w-none 
+                        prose-headings:font-bold prose-headings:text-slate-800 
+                        prose-a:text-primary prose-a:no-underline hover:prose-a:underline
+                        prose-img:rounded-xl prose-img:shadow-lg">
+                
+                {{ content.body | safe }}
+
+            </div>
+        </div>
+
+        <div class="bg-slate-50 p-6 border-t border-slate-200 flex justify-between items-center">
+            <span class="text-xs text-slate-500">Automated Content Aggregation</span>
+            <a href="{{ content.source_url }}" target="_blank" class="text-sm font-bold text-primary hover:text-accent transition-colors flex items-center gap-1">
+                View Original Source 
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

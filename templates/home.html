@@ -1,0 +1,1603 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>MediCare AI — AI-Powered Alzheimer's Recognition</title>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#0ea5a4',
+            accent: '#7c3aed',
+            brandBlue: '#0052cc'
+          },
+          keyframes: {
+            fadeInUp: {
+              '0%': { opacity: '0', transform: 'translateY(14px) scale(.995)' },
+              '60%': { opacity: '.95', transform: 'translateY(-6px) scale(1.002)' },
+              '100%': { opacity: '1', transform: 'translateY(0) scale(1)' }
+            },
+            floaty: {
+              '0%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(-8px)' },
+              '100%': { transform: 'translateY(0px)' }
+            },
+            gradientShift: {
+              '0%': { backgroundPosition: '0% 50%' },
+              '50%': { backgroundPosition: '100% 50%' },
+              '100%': { backgroundPosition: '0% 50%' }
+            }
+          },
+          animation: {
+            fadeInUp: 'fadeInUp .9s cubic-bezier(.2,.9,.2,1) both',
+            floaty: 'floaty 4s ease-in-out infinite',
+            gradientShift: 'gradientShift 4s ease infinite'
+          }
+        }
+      }
+    }
+  </script>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+  <style>
+    /* ---- Vars ---- */
+    :root{
+      --btn-grad-from: #0ea5a4;
+      --btn-grad-to:   #7c3aed;
+      --text-default:  #0f1724;
+      --glass-bg: rgba(255,255,255,0.62);
+    }
+
+    /* --------------------------
+       Global / Body (merged)
+       -------------------------- */
+    html,body { height: 100%; }
+    body {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      color: var(--text-default);
+      /* keep your brain.jpg background and a subtle white layer on top for brightness */
+      background-image:
+        linear-gradient(180deg, rgba(255,255,255,0.82), rgba(245,247,250,0.92)),
+        url('/static/images/brain.jpg');
+      background-attachment: fixed;
+      background-size: cover;
+      background-position: center;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+
+    /* Glass / helpers */
+    .glass {
+      background: var(--glass-bg);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+
+    .logo-mark { filter: drop-shadow(0 6px 18px rgba(12,12,60,0.12)); }
+
+    /* --------------------------
+       Buttons - simplified .btn-animated
+       -------------------------- */
+    .btn-animated {
+      background: #ffffff;
+      color: var(--text-default);
+      border: 1px solid rgba(15,23,36,0.06);
+
+      /* stacking & layout */
+      position: relative;
+      z-index: 1;
+      overflow: hidden;
+
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: .5rem;
+
+      transition: color .22s ease, transform .18s ease, box-shadow .18s ease;
+      padding: .5rem .9rem;
+      border-radius: .75rem;
+    }
+
+    /* remove gradient overlay (was ::before) - we intentionally don't include it here */
+
+    .btn-animated > * { position: relative; z-index: 2; }
+
+    .btn-animated:hover,
+    .btn-animated:focus {
+      color: #000 !important;
+      transform: translateY(-3px);
+      box-shadow: 0 8px 28px rgba(16,24,40,0.06);
+    }
+
+    .btn-animated svg,
+    .btn-animated .icon {
+      stroke: currentColor;
+      fill: none;
+      color: inherit;
+      transition: stroke .22s ease, fill .22s ease;
+    }
+
+    /* gradient CTA (Get Started) kept as-is and still uses the gradient */
+    .btn-gradient {
+      background: linear-gradient(90deg, var(--btn-grad-from), var(--btn-grad-to));
+      color: #fff;
+      position: relative;
+      transition: transform .2s ease, box-shadow .2s ease;
+      padding: .6rem 1rem;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items:center;
+      gap:.5rem;
+    }
+    .btn-gradient:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+
+    /* pulse */
+    .pulse-dot { position: relative; left:0; width:8px; height:8px; border-radius:999px; background: rgba(255,255,255,0.95); box-shadow: 0 0 8px rgba(255,255,255,0.9); display:inline-block; }
+
+    /* --------------------------
+       Hero / Card helpers
+       -------------------------- */
+    .card-accent {
+      background: linear-gradient(180deg, rgba(14,165,164,0.06), rgba(124,58,237,0.04));
+    }
+    .hero-img-overlay {
+      background: linear-gradient(180deg, rgba(6,7,10,0.12), rgba(255,255,255,0.02));
+    }
+
+    /* feature card */
+    .feature-card {
+      background: #fff;
+      border-radius: 1rem;
+      padding: 1.25rem;
+      border: 1px solid rgba(15,23,36,0.04);
+      transition: transform .18s ease, box-shadow .18s ease;
+    }
+    .feature-card:hover { transform: translateY(-6px); box-shadow: 0 18px 40px rgba(15,23,42,0.08); }
+
+    /* small animations */
+    @keyframes gradientShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+    @keyframes floaty { 0% { transform: translateY(0px); } 50% { transform: translateY(-8px); } 100% { transform: translateY(0px); } }
+    .animate-floaty { animation: floaty 4s ease-in-out infinite; }
+
+    @keyframes fadeInUp { 0% { opacity: 0; transform: translateY(16px) scale(.996); } 60% { opacity: .98; transform: translateY(-6px) scale(1.002); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
+    .animate-fadeInUp { animation: fadeInUp .9s cubic-bezier(.2,.9,.2,1) both; }
+
+    /* layout tweaks */
+    .hero-img { height: 320px; object-fit: cover; }
+    @media (min-width: 640px) { .hero-img { height: 360px; } }
+    @media (min-width: 1024px) { .hero-img { height: 420px; } }
+
+    /* compact badge (for AI Assistant / Recommendation) */
+    .badge {
+      display:inline-flex; align-items:center; gap:.6rem; padding:.45rem .6rem; border-radius:999px; background:rgba(255,255,255,0.9); box-shadow: 0 6px 18px rgba(2,6,23,0.06); color:#07323a; font-weight:600; font-size:.9rem;
+    }
+    .badge svg { width:18px; height:18px; }
+
+    /* accessibility helper */
+    .focus-ring:focus { outline: 3px solid rgba(14,165,164,0.12); outline-offset: 3px; }
+
+    footer .logo-mark { filter: drop-shadow(0 10px 30px rgba(2,6,23,0.18)); }
+    
+    /* ADDED STYLES FOR NEW SECTIONS */
+    .tab-btn.active { background-color: #0ea5a4; color: white; border-color: #0ea5a4; }
+    .tab-content { display: none; animation: fadeInUp 0.5s ease-out; }
+    .tab-content.active { display: block; }
+
+  /* --- CHATBOT STYLES --- */
+   /* 1. Button Styling */
+    .chat-toggler {
+        position: fixed !important;
+        bottom: 30px !important;
+        right: 30px !important;
+        height: 60px;
+        width: 60px;
+        background: linear-gradient(135deg, #0ea5a4, #7c3aed);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        transition: transform 0.2s ease;
+        z-index: 10000 !important;
+    }
+    .chat-toggler:hover { transform: scale(1.1); }
+    
+    /* 2. Chat Window Styling */
+    #chat-container {
+        position: fixed !important;
+        bottom: 100px !important;
+        right: 30px !important;
+        width: 380px;
+        height: 500px;
+        background: #fff;
+        border-radius: 15px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        display: none;
+        flex-direction: column;
+        overflow: hidden;
+        z-index: 10000 !important;
+        border: 1px solid #e2e8f0;
+        animation: slideIn 0.3s ease;
+    }
+    
+    @media (max-width: 480px) {
+        #chat-container {
+            width: 90%;
+            right: 5%;
+            bottom: 90px;
+            height: 70vh;
+        }
+    }
+
+    @keyframes slideIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+
+    /* Internal Elements */
+    .chat-header {
+        background: linear-gradient(135deg, #0ea5a4, #7c3aed);
+        padding: 15px; color: white; display: flex; justify-content: space-between; align-items: center;
+    }
+    .chat-header h4 { margin: 0; font-size: 1.1rem; font-weight: 700; }
+    .chat-header span { font-size: 0.8rem; opacity: 0.9; }
+    
+    .chat-box { flex: 1; padding: 15px; overflow-y: auto; background: #f8fafc; }
+    
+    .message-row { display: flex; margin-bottom: 15px; align-items: flex-start; }
+    .user-msg { margin-left: auto; background: #0ea5a4; color: white; padding: 10px 15px; border-radius: 15px 15px 0 15px; max-width: 80%; font-size: 0.9rem; }
+    .bot-msg { background: #e2e8f0; color: #1e293b; padding: 10px 15px; border-radius: 15px 15px 15px 0; max-width: 80%; font-size: 0.9rem; }
+    
+    .input-area { padding: 10px; border-top: 1px solid #e2e8f0; background: #fff; display: flex; gap: 10px; }
+    .input-area input { flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 20px; outline: none; font-size: 0.9rem; }
+    .send-btn, .mic-btn { background: #0ea5a4; color: white; border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display:flex; align-items:center; justify-content:center; }
+    .mic-btn.active { background: #ef4444; animation: pulse 1.5s infinite; }
+    .close-btn { background:transparent; border:none; color:white; font-size:1.2rem; cursor:pointer; }
+  </style>
+
+</head>
+<body class="text-slate-900 antialiased">
+
+  <header class="sticky top-0 z-40 glass border-b border-slate-200">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <a href="{{ url_for('home') }}" class="flex items-center gap-3">
+         <div class="w-10 h-10 rounded-2xl flex items-center justify-center logo-mark animate-floaty"
+            style="background: linear-gradient(135deg,var(--btn-grad-from),var(--btn-grad-to));">
+              <img src="/static/images/mental-health.png" alt="Brain Logo" class="w-7 h-7 object-contain" />
+          </div>
+
+          <div>
+            <div class="text-lg font-semibold leading-tight">MediCare AI</div>
+            <div class="text-xs text-slate-600">Explainable cognitive diagnostics</div>
+          </div>
+        </a>
+
+        <nav class="hidden md:flex items-center gap-4">
+
+    {% if current_user.is_authenticated %}
+        
+        {% if current_user.role == 'patient' %}
+            
+            <a href="{{ url_for('upload_process') }}" 
+               class="btn-animated px-5 py-2.5 rounded-full text-sm font-bold text-slate-600 border border-slate-200 hover:border-primary hover:text-primary transition-all shadow-sm">
+               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+               Upload Scan
+            </a>
+
+            <a href="{{ url_for('patient_dashboard') }}" 
+               class="btn-animated px-5 py-2.5 rounded-full text-sm font-bold text-white bg-gradient-to-r from-[var(--btn-grad-from)] to-[var(--btn-grad-to)] shadow-md hover:shadow-lg border border-transparent">
+               <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+               Patient Dashboard
+            </a>
+
+        {% elif current_user.role == 'doctor' %}
+             
+            <a href="{{ url_for('doctor_scans') }}" 
+                class="btn-animated px-5 py-2.5 rounded-full text-sm font-bold text-slate-600 border border-slate-200 hover:border-emerald-500 hover:text-emerald-600 transition-all shadow-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                Review Scans
+            </a>
+
+            <a href="{{ url_for('doctor_dashboard') }}" 
+               class="btn-animated px-5 py-2.5 rounded-full text-sm font-bold text-white bg-gradient-to-r from-emerald-500 to-teal-600 shadow-md hover:shadow-lg border border-transparent">
+               <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+               Doctor Panel
+            </a>
+
+        {% endif %}
+
+        <div class="relative ml-4 border-l border-slate-200 pl-4" x-data="{ open: false }">
+            <button @click="open = !open" @click.away="open = false" class="flex items-center gap-3 focus:outline-none group p-1 rounded-full hover:bg-slate-50 transition-colors">
+                
+                {% if current_user.role == 'doctor' %}
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center font-bold shadow-md ring-2 ring-white group-hover:ring-emerald-200 transition-all text-sm">
+                        {{ current_user.username[0] | upper }}
+                    </div>
+                {% else %}
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-600 to-violet-600 text-white flex items-center justify-center font-bold shadow-md ring-2 ring-white group-hover:ring-blue-200 transition-all text-sm">
+                        {{ current_user.username[0] | upper }}
+                    </div>
+                {% endif %}
+
+                <div class="text-left hidden lg:block">
+                    <p class="text-sm font-bold text-slate-800 leading-tight group-hover:text-primary transition-colors">{{ current_user.username }}</p>
+                    
+                    {% if current_user.role == 'doctor' %}
+                        <p class="text-[10px] font-extrabold text-emerald-600 uppercase tracking-wider">DOCTOR</p>
+                    {% else %}
+                        <p class="text-[10px] font-extrabold text-blue-600 uppercase tracking-wider">PATIENT</p>
+                    {% endif %}
+                    
+                </div>
+                
+                <svg class="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-transform" :class="{'rotate-180': open}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </button>
+
+            <div x-show="open" 
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 translate-y-2"
+                 x-transition:enter-end="opacity-100 translate-y-0"
+                 x-transition:leave="transition ease-in duration-150"
+                 x-transition:leave-start="opacity-100 translate-y-0"
+                 x-transition:leave-end="opacity-0 translate-y-2"
+                 class="absolute right-0 mt-3 w-56 bg-white rounded-xl shadow-xl ring-1 ring-black/5 py-2 z-50 border border-slate-100"
+                 style="display: none;">
+                 
+                <div class="px-5 py-3 border-b border-slate-50 bg-slate-50/50">
+                    <p class="text-xs font-semibold text-slate-400 uppercase">Signed in as</p>
+                    <p class="text-sm font-bold text-slate-900 truncate">{{ current_user.email }}</p>
+                </div>
+
+                <div class="py-1">
+                    {% if current_user.role == 'patient' %}
+                        <a href="{{ url_for('patient_dashboard') }}" class="flex items-center gap-2 px-5 py-2.5 text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                            My Dashboard
+                        </a>
+                    {% else %}
+                        <a href="{{ url_for('doctor_dashboard') }}" class="flex items-center gap-2 px-5 py-2.5 text-sm text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            Doctor Dashboard
+                        </a>
+                    {% endif %}
+                </div>
+
+                <div class="border-t border-slate-100 mt-1 py-1">
+                    <a href="{{ url_for('logout') }}" class="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                        Sign out
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    {% else %}
+        
+        <a class="text-sm font-bold text-slate-600 hover:text-[#0ea5a4] transition-all duration-300 hover:-translate-y-0.5" 
+          href="{{ url_for('how_it_works') }}">
+          How it Works
+        </a>
+
+        <a class="text-sm font-bold text-slate-600 hover:text-[#0ea5a4] transition-all duration-300 hover:-translate-y-0.5 flex items-center gap-1" 
+           href="{{ url_for('quiz') }}">
+           <svg class="w-4 h-4 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+           Quick Quiz
+        </a>
+
+      <a class="text-sm font-bold text-slate-600 hover:text-[#0ea5a4] transition-all duration-300 hover:-translate-y-0.5" 
+        href="{{ url_for('learn_more') }}">
+        Learn More
+      </a>
+
+      <div class="w-px h-6 bg-slate-200 mx-2"></div>
+
+      <a href="{{ url_for('select_role') }}" 
+        class="group px-6 py-2.5 rounded-full text-sm font-bold text-slate-700 bg-white border border-slate-200 shadow-sm transition-all duration-300 
+                hover:border-[#0ea5a4] hover:text-[#0ea5a4] hover:shadow-lg hover:shadow-[#0ea5a4]/20 hover:-translate-y-0.5 flex items-center gap-2">
+          
+          <svg class="w-4 h-4 text-slate-400 group-hover:text-[#0ea5a4] transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
+          </svg>
+          Login
+      </a>
+
+        <a href="{{ url_for('select_role') }}" class="btn-gradient inline-flex items-center gap-2 px-6 py-3 rounded-full font-medium shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all relative group overflow-hidden">
+            <span class="relative flex h-3 w-3">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-50"></span>
+              <span class="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
+            </span>
+            <span class="relative z-10">Get Started</span>
+            <div class="absolute inset-0 -translate-x-full group-hover:animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/20 to-transparent z-0"></div>
+        </a>
+    {% endif %}
+
+</nav>
+
+        <div class="md:hidden">
+          <button class="p-2 rounded-md bg-white shadow focus-ring" aria-label="open menu">
+            <svg class="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main id="page" class="opacity-0">
+
+  <section class="relative overflow-hidden">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start py-12">
+
+        <div class="space-y-3 hero-text">
+          <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold leading-tight tracking-tight">
+            Detect Alzheimer's earlier with <span class="text-emerald-500">MediCare AI</span>
+          </h1>
+          <p class="text-lg text-slate-600 max-w-xl">
+            Upload scans (patients), receive region-wise explainability maps, and track each patient's progress over time. Enterprise security and multi-format support built in.
+          </p>
+
+          <div class="flex flex-wrap gap-3 items-center">
+            <a href="{{ url_for('learn_more') }}" class="btn-animated inline-flex items-center gap-2 px-5 py-3 rounded-lg font-medium shadow focus-ring group">
+              Learn more
+              <svg class="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </a>
+
+            <div class="ml-2 inline-flex items-center gap-2 bg-white/90 glass px-3 py-1 rounded-full text-sm shadow-sm border border-slate-100">
+              <span class="relative flex h-2.5 w-2.5">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-600"></span>
+              </span>
+              <span class="text-slate-600 font-medium">Realtime analysis</span>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap gap-4 mt-4">
+            <div class="flex items-center gap-3 bg-white/80 glass px-4 py-2 rounded-lg border hover:scale-105 transition-transform duration-300">
+              <svg class="w-5 h-5 text-primary animate-pulse" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3"/>
+                <circle cx="12" cy="12" r="9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <div class="text-sm text-slate-600">DICOM · NIfTI · PNG · JPEG</div>
+            </div>
+
+            <div class="flex items-center gap-3 bg-white/80 glass px-4 py-2 rounded-lg border hover:scale-105 transition-transform duration-300">
+              <svg class="w-5 h-5 text-amber-500 animate-[spin_4s_linear_infinite]" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                <path d="M12 2l2.4 7.2h7.6l-6 4.8 2.4 7.2-6-4.8-6 4.8 2.4-7.2-6-4.8h7.6z"/>
+              </svg>
+              <div class="text-sm text-slate-600">Designed for clinical workflows</div>
+            </div>
+
+            <div class="flex items-center gap-3">
+              <div class="badge group cursor-pointer hover:bg-slate-50 transition-colors">
+                <svg class="animate-bounce" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="animation-duration: 2s;">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h12a2 2 0 012 2z"/>
+                </svg>
+                AI Assistant
+              </div>
+
+              <div style="width:.5rem"></div>
+
+              <div class="badge group cursor-pointer hover:bg-slate-50 transition-colors">
+                <svg class="w-4 h-4 animate-pulse text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                        d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z">
+                  </path>
+                </svg>
+                Recommendation System
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="relative self-start lg:-mt-2">
+          <div class="rounded-2xl overflow-hidden shadow-2xl hero-img hero-img-overlay">
+            <img alt="Brain scan illustration"
+                src="/static/images/Brain-Disease-Illustration.jpg"
+                class="w-full h-full object-cover object-top block"/>
+            <div class="absolute right-6 bottom-6 max-w-xs transform transition hover:scale-[1.03] animate-floaty">
+              <div class="bg-white rounded-2xl p-4 shadow-2xl border border-slate-100">
+                <div class="text-xs text-slate-500">AI Triage</div>
+                <div class="mt-3 rounded-lg card-accent p-3">
+                  <div class="text-sm font-semibold">Likely: Mild cognitive impairment</div>
+                  <div class="mt-2 text-xs text-slate-500">Confidence: <span class="font-medium">92%</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="absolute left-4 top-4 grid grid-cols-3 gap-1 pointer-events-none">
+              <span class="block w-1.5 h-1.5 bg-white/70 rounded-full"></span>
+              <span class="block w-1.5 h-1.5 bg-white/40 rounded-full"></span>
+              <span class="block w-1.5 h-1.5 bg-white/20 rounded-full"></span>
+              <span class="block w-1.5 h-1.5 bg-white/40 rounded-full"></span>
+              <span class="block w-1.5 h-1.5 bg-white/70 rounded-full"></span>
+              <span class="block w-1.5 h-1.5 bg-white/40 rounded-full"></span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <section id="learn-more" class="py-20">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <h2 class="text-3xl sm:text-4xl font-bold text-center mb-8">Core Platform Features</h2>
+      <p class="text-center text-slate-600 max-w-2xl mx-auto mb-12">
+        Tools for patients and doctors to upload scans, understand results, and follow progress over time.
+      </p>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="feature-card">
+          <div class="w-12 h-12 rounded-lg mb-4 flex items-center justify-center bg-emerald-50 text-emerald-600 feature-icon">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+            </svg>
+          </div>
+          <h3 class="text-xl font-semibold mb-2">Patient Management</h3>
+          <p class="text-slate-600 mb-3">
+            Keep all patient information in one place — demographics, medical notes, visits, and scan results.
+          </p>
+          <ul class="text-sm text-slate-500 space-y-1">
+            <li>• Easy-to-read patient timeline with visits and updates.</li>
+            <li>• Add notes, files, and images to each visit.</li>
+            <li>• Only authorized staff can view or edit patient data.</li>
+          </ul>
+        </div>
+
+        <div class="feature-card">
+          <div class="w-12 h-12 rounded-lg mb-4 flex items-center justify-center bg-purple-50 text-purple-600 feature-icon">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0h6m6 0v-6a2 2 0 00-2-2h-2a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2z"></path>
+            </svg>
+          </div>
+          <h3 class="text-xl font-semibold mb-2">Progress Monitoring</h3>
+          <p class="text-slate-600 mb-3">
+            See how a patient’s condition changes over time with charts, old scan results, and side-by-side comparisons.
+          </p>
+          <ul class="text-sm text-slate-500 space-y-1">
+            <li>• Patients can view all previous scans and test results.</li>
+            <li>• Doctors can review complete patient history and compare scans easily.</li>
+            <li>• Alerts if results show a sudden drop or worrying change.</li>
+          </ul>
+        </div>
+
+        <div class="feature-card">
+          <div class="w-12 h-12 rounded-lg mb-4 flex items-center justify-center bg-orange-50 text-orange-600 feature-icon">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+            </svg>
+          </div>
+          <h3 class="text-xl font-semibold mb-2">AI Assistant</h3>
+          <p class="text-slate-600 mb-3">
+            An assistant that explains disease details, answers questions, and guides patients — from prevention tips to simple summaries.
+          </p>
+          <ul class="text-sm text-slate-500 space-y-1">
+            <li>• Explains Alzheimer’s symptoms and progression.</li>
+            <li>• Offers prevention advice, exercises, and resources.</li>
+            <li>• Helps prepare referral notes for clinicians.</li>
+          </ul>
+        </div>
+
+        <div class="feature-card">
+          <div class="w-12 h-12 rounded-lg mb-4 flex items-center justify-center bg-teal-50 text-teal-600 feature-icon">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+            </svg>
+          </div>
+          <h3 class="text-xl font-semibold mb-2">Multi-Format Support</h3>
+          <p class="text-slate-600 mb-3">
+            Upload and view DICOM, NIfTI, PNG, and JPEG files without extra tools.
+          </p>
+          <ul class="text-sm text-slate-500 space-y-1">
+            <li>• Works with medical scan formats and normal images.</li>
+            <li>• View slices, metadata, and image details easily.</li>
+            <li>• Optional removal of personal details for privacy.</li>
+          </ul>
+        </div>
+
+        <div class="feature-card">
+          <div class="w-12 h-12 rounded-lg mb-4 flex items-center justify-center bg-red-50 text-red-600 feature-icon">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.044a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+            </svg>
+          </div>
+          <h3 class="text-xl font-semibold mb-2">Privacy & Security</h3>
+          <p class="text-slate-600 mb-3">
+            All data is encrypted and protected to keep patient information safe.
+          </p>
+          <ul class="text-sm text-slate-500 space-y-1">
+            <li>• Data is encrypted at rest and in transit.</li>
+            <li>• Audit logs show who accessed what and when.</li>
+            <li>• User roles & permissions prevent unauthorized access.</li>
+          </ul>
+        </div>
+        <div class="bg-white rounded-2xl border p-6 shadow feature-card">
+          <div class="w-12 h-12 rounded-lg mb-4 flex items-center justify-center bg-indigo-50 text-indigo-600 feature-icon" aria-hidden="true">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z">
+              </path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z">
+              </path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                    d="M20 4l-1 3-3 1 3 1 1 3 1-3 3-1-3-1-1-3z">
+              </path>
+            </svg>
+          </div>
+
+          <h3 class="text-xl font-semibold mb-2">Recommendation system</h3>
+
+          <p class="text-slate-600 mb-3">
+            Personalized referrals and nearby care suggestions — helps patients find the right hospital and specialist, fast.
+          </p>
+
+          <ul class="text-sm text-slate-500 space-y-1">
+            <li>• Suggests nearby hospitals and specialists based on location and clinical need.</li>
+            <li>• Matches patient condition to recommended care pathways and clinicians.</li>
+            <li>• Filters by insurance, language, and availability for practical referrals.</li>
+            <li>• Option to send recommended referrals directly to a doctor or patient inbox.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="py-16 bg-gradient-to-b from-white/80 to-white/90">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+        <div class="space-y-4">
+          <h2 class="text-3xl font-bold">Why MediCare AI focuses on Alzheimer’s</h2>
+          <p class="text-slate-700 max-w-xl">
+            Early detection matters. Alzheimer’s disease begins long before symptoms are obvious — and early intervention yields the best outcomes.
+            MediCare AI helps clinicians and patients spot patterns, track change over time, and provide actionable next steps.
+          </p>
+
+          <ul class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+            <li class="flex gap-3 items-start">
+              <div class="w-9 h-9 rounded-lg bg-primary text-white flex items-center justify-center">1</div>
+              <div>
+                <div class="font-semibold">Upload & Analyze</div>
+                <div class="text-sm text-slate-600">Patients upload scans and receive region-wise explainability maps.</div>
+              </div>
+            </li>
+            <li class="flex gap-3 items-start">
+              <div class="w-9 h-9 rounded-lg bg-primary text-white flex items-center justify-center">2</div>
+              <div>
+                <div class="font-semibold">AI Assistant</div>
+                <div class="text-sm text-slate-600">Provides prevention tips, exercises, and plain-language summaries.</div>
+              </div>
+            </li>
+            <li class="flex gap-3 items-start">
+              <div class="w-9 h-9 rounded-lg bg-primary text-white flex items-center justify-center">3</div>
+              <div>
+                <div class="font-semibold">Recommendation System</div>
+                <div class="text-sm text-slate-600">Matches patients with nearby clinics and specialist referrals.</div>
+              </div>
+            </li>
+            <li class="flex gap-3 items-start">
+              <div class="w-9 h-9 rounded-lg bg-primary text-white flex items-center justify-center">4</div>
+              <div>
+                <div class="font-semibold">Monitoring & Trending</div>
+                <div class="text-sm text-slate-600">Track cognitive trends over months & years with secure dashboards.</div>
+              </div>
+            </li>
+          </ul>
+
+          <div class="mt-6 flex gap-3">
+            <a href="{{ url_for('select_role') }}" class="btn-gradient">
+              Get started
+            </a>
+            <a href="{{ url_for('how_it_works') }}" class="btn-animated">
+              Learn how it works
+            </a>
+          </div>
+        </div>
+
+        <div>
+          <div class="rounded-2xl overflow-hidden shadow-lg bg-white">
+          <model-viewer
+              src="/static/images/brain_realistic_free/scene.gltf"
+              alt="3D Brain Model"
+              camera-controls
+              auto-rotate
+              ar
+              ar-modes="webxr scene-viewer quick-look"
+              class="w-full h-80 object-cover block">
+          </model-viewer>
+        </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="stats" class="py-20 glass border-t border-slate-200">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-10">
+        <h2 class="text-3xl font-bold text-slate-900">The Silent Epidemic</h2>
+        <p class="mt-4 text-slate-600 max-w-2xl mx-auto">
+          Without early detection tools like MediCare AI, the global burden of Alzheimer's is projected to triple by 2050.
+        </p>
+      </div>
+
+      <div class="grid lg:grid-cols-2 gap-12 items-center">
+        <div class="space-y-6">
+           <div class="feature-card flex gap-4 items-start">
+             <div class="w-12 h-12 rounded-lg bg-red-50 flex items-center justify-center shrink-0">
+               <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+             </div>
+             <div>
+               <h3 class="text-lg font-bold text-slate-900">55 Million+</h3>
+               <p class="text-slate-600">People living with dementia worldwide today.</p>
+             </div>
+           </div>
+           
+           <div class="feature-card flex gap-4 items-start">
+             <div class="w-12 h-12 rounded-lg bg-orange-50 flex items-center justify-center shrink-0">
+               <svg class="w-6 h-6 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+             </div>
+             <div>
+               <h3 class="text-lg font-bold text-slate-900">Every 3 Seconds</h3>
+               <p class="text-slate-600">Someone in the world develops dementia.</p>
+             </div>
+           </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl shadow-xl border border-slate-100 h-80">
+          <canvas id="alzheimersChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="py-20">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl font-bold">Why Multimodal AI?</h2>
+        <p class="text-slate-600 max-w-2xl mx-auto mt-2">
+            Most systems use only MRI. MediCare AI combines <strong>MRI, PET, and Clinical Data</strong> for superior accuracy.
+        </p>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-8">
+        <div class="bg-slate-50 p-8 rounded-2xl border border-slate-200 opacity-80">
+            <h3 class="text-xl font-bold text-slate-500 mb-4">Single Modality (MRI Only)</h3>
+            <div class="h-32 w-full rounded-lg overflow-hidden mb-4 border border-slate-300 relative bg-black group-hover:border-slate-400 transition-colors">
+              <img src="https://images.unsplash.com/photo-1559757175-5700dde675bc?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80" 
+                  alt="Structural MRI Scan" 
+                  class="w-full h-full object-cover opacity-90 hover:scale-105 transition-transform duration-700">
+                  
+              <div class="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm px-2 py-1 rounded text-[10px] font-bold text-white uppercase tracking-wider">
+                  MRI • T1 Weighted
+              </div>
+          </div>
+            <ul class="text-sm text-slate-500 space-y-2">
+                <li>✖ Only detects structural shrinkage</li>
+                <li>✖ Misses early metabolic changes</li>
+                <li>✖ Limited accuracy in early stages</li>
+            </ul>
+        </div>
+
+        <div class="glass p-8 rounded-2xl border-2 border-primary shadow-lg relative">
+            <div class="absolute top-0 right-0 bg-primary text-white text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-lg">MediCare AI</div>
+            <h3 class="text-xl font-bold text-primary mb-4">Multimodal Fusion</h3>
+            <div class="flex gap-3 mb-6 items-center">
+              <div class="h-28 flex-1 rounded-xl relative overflow-hidden border border-slate-200 shadow-sm group">
+                  <img src="https://images.unsplash.com/photo-1559757175-5700dde675bc?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80" 
+                      alt="MRI Scan" 
+                      class="w-full h-full object-cover opacity-90 grayscale group-hover:scale-110 transition-transform duration-500">
+                  
+                  <div class="absolute inset-x-0 bottom-0 bg-slate-900/80 backdrop-blur-sm py-1.5 text-center">
+                      <span class="block text-[10px] font-bold text-white uppercase tracking-wider">MRI</span>
+                      <span class="block text-[9px] text-slate-300 leading-none">Structure</span>
+                  </div>
+              </div>
+
+              <div class="h-32 flex-1 rounded-xl relative overflow-hidden border-2 border-primary shadow-2xl z-10 scale-110 group">
+                  <img src="https://images.unsplash.com/photo-1559757175-5700dde675bc?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80" 
+                      alt="PET Scan" 
+                      class="w-full h-full object-cover">
+                  
+                  <div class="absolute inset-0 opacity-70 mix-blend-multiply" 
+                      style="background: radial-gradient(circle, #ff0 0%, #f00 40%, #00f 100%);">
+                  </div>
+
+                  <div class="absolute inset-x-0 bottom-0 bg-primary/90 backdrop-blur-md py-1.5 text-center border-t border-white/20">
+                      <span class="block text-[10px] font-bold text-white uppercase tracking-wider">PET</span>
+                      <span class="block text-[9px] text-white/90 leading-none">Metabolic</span>
+                  </div>
+              </div>
+
+             <div class="h-28 flex-1 rounded-xl relative overflow-hidden border border-slate-200 shadow-sm group bg-slate-900 flex flex-col items-center justify-center">
+              <div class="w-full px-4 opacity-90 group-hover:scale-105 transition-transform duration-500">
+                  
+                  <div class="flex justify-between items-center mb-3">
+                      <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
+                      </svg>
+                      <div class="flex gap-1">
+                          <div class="w-8 h-1.5 bg-slate-700 rounded-full"></div>
+                          <div class="w-4 h-1.5 bg-blue-500 rounded-full"></div>
+                      </div>
+                  </div>
+
+                  <div class="flex items-end gap-1.5 h-8 border-b border-slate-700 pb-1">
+                      <div class="w-1.5 bg-slate-700 h-full rounded-t-sm opacity-30"></div>
+                      <div class="w-2 bg-teal-400 h-[60%] rounded-t-sm"></div>
+                      <div class="w-2 bg-blue-500 h-[85%] rounded-t-sm"></div>
+                      <div class="w-2 bg-purple-500 h-[45%] rounded-t-sm"></div>
+                      <div class="w-1.5 bg-slate-700 h-full rounded-t-sm opacity-30"></div>
+                  </div>
+                  
+              </div>
+              
+              <div class="absolute inset-x-0 bottom-0 bg-slate-900/95 backdrop-blur-md py-1.5 text-center border-t border-slate-800">
+                  <span class="block text-[10px] font-bold text-white uppercase tracking-wider">Data</span>
+                  <span class="block text-[9px] text-slate-400 leading-none">Demographics</span>
+              </div>
+          </div>
+
+          </div>
+            <ul class="text-sm text-slate-700 space-y-2 font-medium">
+                <li class="flex items-center gap-2"><svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Detects metabolic decline before structure loss</li>
+                <li class="flex items-center gap-2"><svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Integrates genetic factors (APOE-e4)</li>
+            </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="py-24 bg-white relative overflow-hidden">
+    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[120%] h-full bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-teal-50/50 via-white to-white z-0 pointer-events-none"></div>
+
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
+      <div class="text-center mb-16">
+        <span class="text-primary font-bold tracking-wider uppercase text-xs">Simple Workflow</span>
+        <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mt-2">From Scan to Insight in Minutes</h2>
+      </div>
+
+      <div class="relative">
+        <div class="hidden md:block absolute top-12 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-slate-200 to-transparent z-0"></div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+          
+          <div class="relative group text-center">
+            <div class="w-24 h-24 mx-auto bg-white rounded-2xl shadow-lg border border-slate-100 flex items-center justify-center relative z-10 group-hover:-translate-y-2 transition-transform duration-300">
+              <div class="text-4xl">📂</div>
+              <div class="absolute -top-3 -right-3 w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center font-bold text-sm border-4 border-white">1</div>
+            </div>
+            <h3 class="mt-6 text-lg font-bold text-slate-900">Upload Data</h3>
+            <p class="text-sm text-slate-500 mt-2 px-4">Securely upload MRI (NIfTI/DICOM) or PET scans via our encrypted portal.</p>
+          </div>
+
+          <div class="relative group text-center">
+            <div class="w-24 h-24 mx-auto bg-white rounded-2xl shadow-lg border border-slate-100 flex items-center justify-center relative z-10 group-hover:-translate-y-2 transition-transform duration-300">
+              <div class="text-4xl animate-pulse">🧠</div> <div class="absolute -top-3 -right-3 w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center font-bold text-sm border-4 border-white">2</div>
+            </div>
+            <h3 class="mt-6 text-lg font-bold text-slate-900">AI Processing</h3>
+            <p class="text-sm text-slate-500 mt-2 px-4">Our multimodal model fuses structural and metabolic data to detect atrophy.</p>
+          </div>
+
+          <div class="relative group text-center">
+            <div class="w-24 h-24 mx-auto bg-white rounded-2xl shadow-lg border border-slate-100 flex items-center justify-center relative z-10 group-hover:-translate-y-2 transition-transform duration-300">
+              <div class="text-4xl">📊</div>
+              <div class="absolute -top-3 -right-3 w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center font-bold text-sm border-4 border-white">3</div>
+            </div>
+            <h3 class="mt-6 text-lg font-bold text-slate-900">View Report</h3>
+            <p class="text-sm text-slate-500 mt-2 px-4">Receive a detailed PDF report with confidence scores and Grad-CAM heatmaps.</p>
+          </div>
+
+          <div class="relative group text-center">
+            <div class="w-24 h-24 mx-auto bg-white rounded-2xl shadow-lg border border-slate-100 flex items-center justify-center relative z-10 group-hover:-translate-y-2 transition-transform duration-300">
+              <div class="text-4xl">🏥</div>
+              <div class="absolute -top-3 -right-3 w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center font-bold text-sm border-4 border-white">4</div>
+            </div>
+            <h3 class="mt-6 text-lg font-bold text-slate-900">Get Care</h3>
+            <p class="text-sm text-slate-500 mt-2 px-4">AI suggests nearby specialists and lifestyle plans based on the diagnosis.</p>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+<section class="py-16 bg-slate-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold text-gray-900 sm:text-4xl">Understanding the Condition</h2>
+            <p class="mt-4 text-lg text-gray-500">Explore the science behind Alzheimer's, detection methods, and risk factors.</p>
+        </div>
+
+        <div class="grid grid-cols-1 gap-8 md:grid-cols-3">
+            
+            <a href="/learn/causes" class="group relative block h-full bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden">
+                <div class="h-48 bg-blue-600 flex items-center justify-center group-hover:bg-blue-700 transition-colors">
+                    <svg class="w-20 h-20 text-white opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
+                </div>
+                <div class="p-6">
+                    <h3 class="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">Why Alzheimer's Occurs?</h3>
+                    <p class="mt-3 text-gray-600 line-clamp-3">
+                        Discover the biological changes in the brain, including amyloid plaques and tau tangles, that lead to cognitive decline.
+                    </p>
+                    <span class="mt-4 inline-flex items-center text-blue-600 font-semibold group-hover:underline">
+                        Read Deep Analysis &rarr;
+                    </span>
+                </div>
+            </a>
+
+            <a href="/learn/diagnosis" class="group relative block h-full bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden">
+                <div class="h-48 bg-indigo-600 flex items-center justify-center group-hover:bg-indigo-700 transition-colors">
+                    <svg class="w-20 h-20 text-white opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                </div>
+                <div class="p-6">
+                    <h3 class="text-xl font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">Examining via MRI & PET</h3>
+                    <p class="mt-3 text-gray-600 line-clamp-3">
+                        Technical breakdown of how neuroimaging works, how we distinguish your project classes (CN, MCI, AD), and what doctors look for.
+                    </p>
+                    <span class="mt-4 inline-flex items-center text-indigo-600 font-semibold group-hover:underline">
+                        View Procedures &rarr;
+                    </span>
+                </div>
+            </a>
+
+            <a href="/learn/age-risk" class="group relative block h-full bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden">
+                <div class="h-48 bg-teal-600 flex items-center justify-center group-hover:bg-teal-700 transition-colors">
+                    <svg class="w-20 h-20 text-white opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+                <div class="p-6">
+                    <h3 class="text-xl font-bold text-gray-900 group-hover:text-teal-600 transition-colors">Age & Risk Factors</h3>
+                    <p class="mt-3 text-gray-600 line-clamp-3">
+                        Statistical analysis of onset age. When are chances highest? Understanding Early-onset vs Late-onset Alzheimer's.
+                    </p>
+                    <span class="mt-4 inline-flex items-center text-teal-600 font-semibold group-hover:underline">
+                        Check Statistics &rarr;
+                    </span>
+                </div>
+            </a>
+
+        </div>
+    </div>
+</section>
+
+  <section class="py-20 glass border-t border-slate-200">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-8">
+            <h2 class="text-3xl font-bold">Dedicated Support</h2>
+            <div class="mt-6 inline-flex bg-white rounded-full p-1 shadow-sm border border-slate-200">
+                <button onclick="switchTab('patients')" id="btn-patients" class="tab-btn active px-6 py-2 rounded-full text-sm font-semibold transition-colors">For Patients</button>
+                <button onclick="switchTab('doctors')" id="btn-doctors" class="tab-btn px-6 py-2 rounded-full text-sm font-semibold text-slate-500 hover:text-slate-800 transition-colors">For Doctors</button>
+            </div>
+        </div>
+
+        <div id="content-patients" class="tab-content active max-w-4xl mx-auto">
+            <div class="grid md:grid-cols-2 gap-8 items-center">
+                <div>
+                    <h3 class="text-2xl font-bold text-primary mb-4">Empowering your journey</h3>
+                    <p class="text-slate-600 mb-4">Understanding Alzheimer's can be scary. MediCare AI provides clarity.</p>
+                    <ul class="space-y-3">
+                        <li class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center font-bold">1</div>
+                            <span class="text-slate-700">Early warning years before symptoms</span>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center font-bold">2</div>
+                            <span class="text-slate-700">Personalized exercise & diet plans</span>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center font-bold">3</div>
+                            <span class="text-slate-700">Find nearby specialists instantly</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-lg rotate-1">
+                     <div class="bg-green-50 p-4 rounded-lg mb-2">
+                        <div class="text-xs text-green-800 font-bold uppercase">Recommendation</div>
+                        <div class="text-lg font-bold text-slate-800">Shifa International Hospital Islamabad</div>
+                        <div class="text-sm text-slate-600">65 miles away • 4.8 ★ Rating</div>
+                     </div>
+                     <div class="bg-slate-50 p-4 rounded-lg">
+                        <div class="text-xs text-slate-500 font-bold uppercase">Daily Tip</div>
+                        <div class="text-sm text-slate-600">"Aerobic exercise can increase the size of the hippocampus."</div>
+                     </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="content-doctors" class="tab-content max-w-5xl mx-auto">
+          <div class="grid md:grid-cols-2 gap-12 items-center">
+              
+              <div class="space-y-6">
+                  <h3 class="text-2xl font-bold text-accent mb-2">Diagnostic Analysis & Reporting</h3>
+                  <p class="text-slate-600 mb-6">
+                      A comprehensive toolset designed to help doctors assess patient conditions, visualize disease progression, and manage medical records.
+                  </p>
+                  
+                  <ul class="space-y-5">
+                      <li class="flex gap-4 items-start">
+                          <div class="w-10 h-10 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center font-bold shrink-0">1</div>
+                          <div>
+                              <h4 class="font-bold text-slate-800">Disease Detection & Condition Views</h4>
+                              <p class="text-sm text-slate-600">Instantly detect Alzheimer's biomarkers and view the patient's current brain condition in high resolution.</p>
+                          </div>
+                      </li>
+                      
+                      <li class="flex gap-4 items-start">
+                          <div class="w-10 h-10 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center font-bold shrink-0">2</div>
+                          <div>
+                              <h4 class="font-bold text-slate-800">Deep AI Analysis (Heatmaps)</h4>
+                              <p class="text-sm text-slate-600">Get explainable insights with Grad-CAM heatmaps that highlight exactly which regions are atrophic.</p>
+                          </div>
+                      </li>
+
+                      <li class="flex gap-4 items-start">
+                          <div class="w-10 h-10 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center font-bold shrink-0">3</div>
+                          <div>
+                              <h4 class="font-bold text-slate-800">Downloadable Medical Reports</h4>
+                              <p class="text-sm text-slate-600">Generate and download comprehensive PDF reports containing scans, analysis scores, and notes.</p>
+                          </div>
+                      </li>
+                  </ul>
+              </div>
+
+              <div class="relative group">
+                  <div class="absolute -inset-1 bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-200"></div>
+                  
+                  <div class="relative bg-white p-5 rounded-2xl shadow-xl border border-slate-100">
+                      
+                      <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-3">
+                          <div>
+                              <div class="text-xs font-bold text-slate-400 uppercase">Patient ID</div>
+                              <div class="text-sm font-bold text-slate-800">#883-AD-John</div>
+                          </div>
+                          <button class="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors">
+                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4">
+                              </path>
+                            </svg>
+                              Download Report
+                          </button>
+                      </div>
+
+                      <div class="grid grid-cols-2 gap-3 mb-4">
+                          <div class="space-y-1">
+                              <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Original Scan</span>
+                              <div class="h-32 w-full rounded-lg overflow-hidden border border-slate-200 relative bg-black">
+                                  <img src="/static/images/original_mri.jpg" 
+                                      class="w-full h-full object-cover opacity-80" alt="MRI Scan">
+                              </div>
+                          </div>
+
+                          <div class="space-y-1">
+                              <span class="text-[10px] font-bold text-accent uppercase tracking-wider">AI Heatmap</span>
+                              <div class="h-32 w-full rounded-lg overflow-hidden border border-purple-200 relative bg-black">
+                                  <img src="/static/images/aiheatmap.jpg" alt="AI Heatmap" class="w-full h-full object-cover opacity-80">
+                              </div>
+                          </div>
+                      </div>
+
+                      <div class="bg-purple-50 rounded-lg p-3 border border-purple-100">
+                          <div class="flex items-center gap-2 mb-1">
+                              <div class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
+                              <div class="text-xs font-bold text-purple-800">Analysis Result: <span class="text-red-600">Positive (Early Stage)</span></div>
+                          </div>
+                          <p class="text-[11px] text-slate-600 leading-snug">
+                              AI has detected structural atrophy in the temporal lobe. Confidence score: <strong>94.2%</strong>.
+                          </p>
+                      </div>
+
+                  </div>
+              </div>
+          </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="py-20 bg-slate-50 relative overflow-hidden">
+    <div class="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-slate-300 to-transparent"></div>
+    
+    <div class="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 relative z-10 reveal">
+      <div class="text-center mb-10">
+        <span class="text-primary font-bold tracking-wider uppercase text-[10px]">Support & Education</span>
+        <h2 class="text-2xl md:text-3xl font-bold text-slate-900 mt-1">Frequently Asked Questions</h2>
+      </div>
+
+      <div class="space-y-3">
+        
+        <div class="group bg-white rounded-xl border border-slate-200 overflow-hidden transition-all duration-300 hover:shadow-md hover:border-primary/40">
+          <button onclick="toggleFAQ(this)" class="w-full flex items-center justify-between px-5 py-4 text-left focus:outline-none bg-white group-hover:bg-slate-50/50 transition-colors">
+            <span class="text-sm font-bold text-slate-700 group-hover:text-primary transition-colors">Difference between aging & Alzheimer's?</span>
+            <span class="icon-wrapper w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-primary group-hover:text-white transition-all">
+              <svg class="w-3 h-3 transform transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </span>
+          </button>
+          <div class="faq-content max-h-0 overflow-hidden transition-all duration-500 ease-in-out bg-slate-50/30">
+            <div class="px-5 pb-4 text-xs text-slate-600 leading-relaxed">
+              Normal aging involves occasional forgetfulness. Alzheimer's causes serious memory loss and confusion. MediCare AI detects specific structural atrophy patterns that do not occur in normal aging.
+            </div>
+          </div>
+        </div>
+
+        <div class="group bg-white rounded-xl border border-slate-200 overflow-hidden transition-all duration-300 hover:shadow-md hover:border-primary/40">
+          <button onclick="toggleFAQ(this)" class="w-full flex items-center justify-between px-5 py-4 text-left focus:outline-none bg-white group-hover:bg-slate-50/50 transition-colors">
+            <span class="text-sm font-bold text-slate-700 group-hover:text-primary transition-colors">How accurate is the diagnosis?</span>
+            <span class="icon-wrapper w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-primary group-hover:text-white transition-all">
+              <svg class="w-3 h-3 transform transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </span>
+          </button>
+          <div class="faq-content max-h-0 overflow-hidden transition-all duration-500 ease-in-out bg-slate-50/30">
+            <div class="px-5 pb-4 text-xs text-slate-600 leading-relaxed">
+              Our model achieves over <strong>80% accuracy</strong> in validation tests by combining MRI, PET, and clinical data. However, AI is a support tool, and results should always be reviewed by a neurologist.
+            </div>
+          </div>
+        </div>
+
+        <div class="group bg-white rounded-xl border border-slate-200 overflow-hidden transition-all duration-300 hover:shadow-md hover:border-primary/40">
+          <button onclick="toggleFAQ(this)" class="w-full flex items-center justify-between px-5 py-4 text-left focus:outline-none bg-white group-hover:bg-slate-50/50 transition-colors">
+            <span class="text-sm font-bold text-slate-700 group-hover:text-primary transition-colors">What if my result is positive?</span>
+            <span class="icon-wrapper w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-primary group-hover:text-white transition-all">
+              <svg class="w-3 h-3 transform transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </span>
+          </button>
+          <div class="faq-content max-h-0 overflow-hidden transition-all duration-500 ease-in-out bg-slate-50/30">
+            <div class="px-5 pb-4 text-xs text-slate-600 leading-relaxed">
+              Don't panic. A positive result indicates risk patterns. MediCare AI will suggest nearby specialized clinics and lifestyle changes (diet, exercise) that can help slow progression.
+            </div>
+          </div>
+        </div>
+
+        <div class="group bg-white rounded-xl border border-slate-200 overflow-hidden transition-all duration-300 hover:shadow-md hover:border-primary/40">
+          <button onclick="toggleFAQ(this)" class="w-full flex items-center justify-between px-5 py-4 text-left focus:outline-none bg-white group-hover:bg-slate-50/50 transition-colors">
+            <span class="text-sm font-bold text-slate-700 group-hover:text-primary transition-colors">Is my medical data secure?</span>
+            <span class="icon-wrapper w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-primary group-hover:text-white transition-all">
+              <svg class="w-3 h-3 transform transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </span>
+          </button>
+          <div class="faq-content max-h-0 overflow-hidden transition-all duration-500 ease-in-out bg-slate-50/30">
+            <div class="px-5 pb-4 text-xs text-slate-600 leading-relaxed">
+              Yes. We adhere to strict HIPAA guidelines. Your scans are encrypted during upload and analysis. We do not sell your data, and you can delete records at any time.
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="mt-12 text-center">
+        <p class="text-xs text-slate-400 mb-4 font-medium uppercase tracking-wide">Still have questions?</p>
+        <button onclick="document.getElementById('chat-btn').click()" class="relative inline-flex group items-center justify-center px-8 py-3 font-bold text-green transition-all duration-200 bg-gradient-to-r from-primary to-accent rounded-full shadow-lg hover:shadow-primary/50 hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary overflow-hidden">
+            <div class="absolute inset-0 -translate-x-full group-hover:animate-[shimmer_1s_infinite] bg-gradient-to-r from-transparent via-green/20 to-transparent z-0"></div>
+            
+            <span class="relative flex items-center gap-2 z-10">
+                <span class="text-lg">💬</span>
+                <span>Ask MediBot AI</span>
+                <svg class="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+            </span>
+        </button>
+      </div>
+
+    </div>
+  </section>
+
+  <section class="py-16 mx-4">
+    <div class="mx-auto max-w-5xl bg-gradient-to-r from-primary to-accent rounded-3xl p-8 md:p-12 shadow-2xl relative overflow-hidden text-center md:text-left flex flex-col md:flex-row items-center justify-between gap-8">
+        
+        <div class="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-black opacity-10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute bottom-0 left-0 -mb-10 -ml-10 w-40 h-40 bg-black opacity-10 rounded-full blur-2xl pointer-events-none"></div>
+
+        <div class="relative z-10 text-black max-w-xl">
+            <h2 class="text-3xl font-bold mb-4">Not sure if it's Alzheimer's?</h2>
+            <p class="text-black/90 text-lg mb-6">
+                Take our free, preliminary cognitive assessment quiz. It takes less than 5 minutes and helps determine if you should see a specialist.
+            </p>
+            <div class="flex flex-wrap gap-4 justify-center md:justify-start">
+                <div class="flex items-center gap-2 text-sm bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                    No sign-up required
+                </div>
+                <div class="flex items-center gap-2 text-sm bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3"/></svg>
+                    5 Minutes
+                </div>
+            </div>
+        </div>
+
+        <div class="relative z-10 shrink-0">
+            <a href="{{ url_for('quiz') }}" class="btn-animated bg-white text-primary font-bold text-lg px-8 py-4 shadow-xl hover:shadow-2xl hover:scale-105 transition-all">
+                Take the Quiz
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+            </a>
+        </div>
+    </div>
+</section>
+
+  <footer class="bg-gradient-to-tr from-slate-900 to-slate-800 text-gray-300 mt-12">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
+      <div class="flex flex-col md:flex-row md:justify-between md:items-start gap-8">
+        <div>
+          <a href="{{ url_for('home') }}" class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl flex items-center justify-center logo-mark animate-floaty"
+            style="background: linear-gradient(135deg,var(--btn-grad-from),var(--btn-grad-to));">
+              <img src="/static/images/mental-health.png" alt="Brain Logo" class="w-7 h-7 object-contain" />
+          </div>
+            <div class="font-semibold text-white">MediCare AI</div>
+          </a>
+          <p class="text-sm text-slate-400 mt-3 max-w-xs">AI-powered Alzheimer's recognition — secure, explainable, clinician-first.</p>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-6">
+          <div>
+            <h4 class="font-medium text-white mb-3">Platform</h4>
+            <ul class="text-sm space-y-2 text-slate-300">
+              <li><a href="#" class="hover:text-white">Upload Scan</a></li>
+              <li><a href="#" class="hover:text-white">Patient Management</a></li>
+              <li><a href="#" class="hover:text-white">Monitoring</a></li>
+            </ul>
+          </div>
+          <div>
+            <h4 class="font-medium text-white mb-3">Resources</h4>
+            <ul class="text-sm space-y-2 text-slate-300">
+              <li><a href="#" class="hover:text-white">About Alzheimer's</a></li>
+              <li><a href="#" class="hover:text-white">Research</a></li>
+              <li><a href="#" class="hover:text-white">Support</a></li>
+            </ul>
+          </div>
+          <div>
+            <h4 class="font-medium text-white mb-3">Legal</h4>
+            <ul class="text-sm space-y-2 text-slate-300">
+              <li><a href="#" class="hover:text-white">Privacy</a></li>
+              <li><a href="#" class="hover:text-white">Terms</a></li>
+              <li><a href="#" class="hover:text-white">HIPAA</a></li>
+            </ul>
+          </div>
+          <div>
+            <h4 class="font-medium text-white mb-3">Contact</h4>
+            <ul class="text-sm space-y-2 text-slate-300">
+              <li>Email: <a href="mailto:zahranzahid886@gmail.com" class="hover:text-white">zahranzahid886@gmail.com</a></li>
+              <li>© <span id="year">2025</span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // --- FAQ Accordion Logic ---
+    function toggleFAQ(button) {
+        const content = button.nextElementSibling;
+        const icon = button.querySelector('svg');
+        const isExpanded = content.style.maxHeight;
+
+        // Close all other FAQs (optional - remove this block if you want multiple open)
+        document.querySelectorAll('.faq-content').forEach(el => {
+            el.style.maxHeight = null;
+            // Reset icons of others
+            if (el.previousElementSibling) {
+                const otherIcon = el.previousElementSibling.querySelector('svg');
+                if (otherIcon) otherIcon.classList.remove('rotate-180');
+            }
+        });
+
+        // Toggle current
+        if (!isExpanded) {
+            content.style.maxHeight = content.scrollHeight + "px";
+            icon.classList.add('rotate-180');
+        } else {
+            content.style.maxHeight = null;
+            icon.classList.remove('rotate-180');
+        }
+    }
+    // 1. Existing Entrance Animation
+    document.addEventListener('DOMContentLoaded', () => {
+      const page = document.getElementById('page');
+      requestAnimationFrame(() => {
+        page.classList.remove('opacity-0');
+        page.classList.add('animate-fadeInUp');
+      });
+
+      const yearEl = document.getElementById('year');
+      if (yearEl) yearEl.textContent = new Date().getFullYear();
+    });
+
+    // 2. NEW: Chart.js Logic for Statistics
+    document.addEventListener('DOMContentLoaded', async () => {
+        const ctx = document.getElementById('alzheimersChart');
+        if(ctx) {
+            try {
+                // Try fetching from backend
+                const response = await fetch('/api/global-stats');
+                const data = await response.json();
+                
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.years,
+                        datasets: [{
+                            label: 'Projected Cases (Millions)',
+                            data: data.cases,
+                            borderColor: '#0ea5a4',
+                            backgroundColor: 'rgba(14, 165, 164, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.3
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: false } }
+                    }
+                });
+            } catch (e) {
+                console.log("Using fallback data for chart");
+                // Fallback if backend not ready
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ["2020", "2030", "2040", "2050"],
+                        datasets: [{
+                            label: 'Cases (Millions)',
+                            data: [55, 78, 110, 139],
+                            borderColor: '#0ea5a4',
+                            fill: true
+                        }]
+                    },
+                    options: { maintainAspectRatio: false }
+                });
+            }
+        }
+    });
+
+    // 3. NEW: Tab Switching Logic
+    function switchTab(tabName) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => {
+            el.classList.remove('active');
+            el.classList.add('text-slate-500');
+        });
+
+        document.getElementById(`content-${tabName}`).classList.add('active');
+        const btn = document.getElementById(`btn-${tabName}`);
+        btn.classList.add('active');
+        btn.classList.remove('text-slate-500');
+    }
+  </script>
+  </main>
+<!-- Chatbot UI -->
+{% include 'chatbot.html' %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        
+        // --- 1. CONFIGURATION ---
+        const chatContainer = document.getElementById("chat-container");
+        const chatBox = document.getElementById("chat-box");
+        const chatForm = document.getElementById("chat-form");
+        const chatInput = document.getElementById("text");
+        const micBtn = document.getElementById("mic-btn");
+        const resizeHandle = document.getElementById("resize-handle");
+        const typingIndicator = document.getElementById("typing");
+
+        // Generate or Retrieve Session ID
+        let sessionId = localStorage.getItem("chat_session_id");
+        if (!sessionId) {
+            sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem("chat_session_id", sessionId);
+        }
+
+        // --- 2. TOGGLE CHAT ---
+        // Expose to global scope so the HTML button onclick="toggleChat()" works
+        window.toggleChat = function() {
+            if (chatContainer.style.display === "flex") {
+                chatContainer.style.display = "none";
+            } else {
+                chatContainer.style.display = "flex";
+                // Reset size if it's weird (mobile fix)
+                if(window.innerWidth < 768) {
+                    chatContainer.style.width = "90%";
+                    chatContainer.style.height = "80vh";
+                }
+            }
+        };
+
+        // --- 3. APPEND MESSAGES ---
+        function appendMessage(content, sender) {
+            const div = document.createElement("div");
+            div.className = "message-row";
+            
+            const uniqueId = "msg-" + Date.now();
+
+            if (sender === 'user') {
+                div.innerHTML = `
+                    <div class="user-msg" style="margin-left: auto; background: #0ea5a4; color: white; padding: 10px 15px; border-radius: 15px 15px 0 15px; max-width: 80%; font-size: 0.9rem; margin-bottom: 10px;">${content}</div>
+                    <div class="avatar user-avatar" style="width:30px;height:30px;background:#0ea5a4;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-left:8px;color:white;"><i class="fas fa-user"></i></div>
+                `;
+            } else {
+                // Parse Markdown using Marked.js
+                const htmlContent = marked.parse(content);
+                
+                div.innerHTML = `
+                    <div class="avatar bot-avatar" style="width:30px;height:30px;background:#e2e8f0;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-right:8px;flex-shrink:0;"><i class="fas fa-robot text-slate-600"></i></div>
+                    <div class="message-content-wrapper" style="max-width: 80%;">
+                        <div class="bot-msg prose prose-sm max-w-none text-slate-800" style="background: #f1f5f9; padding: 12px 16px; border-radius: 15px 15px 15px 0; font-size: 0.9rem;" id="${uniqueId}">
+                            ${htmlContent}
+                        </div>
+                        <div class="msg-actions" style="margin-top: 4px;">
+                            <button class="speak-btn text-slate-400 hover:text-primary transition-colors" onclick="speakMessage('${uniqueId}', this)">
+                                <i class="fas fa-volume-up text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        // --- 4. SEND LOGIC (AJAX -> FETCH) ---
+        chatForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const msg = chatInput.value.trim();
+            if (!msg) return;
+
+            // User UI
+            appendMessage(msg, "user");
+            chatInput.value = "";
+            typingIndicator.style.display = "block"; // Show typing
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            try {
+                const formData = new FormData();
+                formData.append("msg", msg);
+                formData.append("session_id", sessionId);
+
+                const response = await fetch("/get_response", {
+                    method: "POST",
+                    body: formData
+                });
+                const data = await response.json();
+
+                typingIndicator.style.display = "none"; // Hide typing
+                
+                // Bot UI
+                if(data.response) {
+                    appendMessage(data.response, "bot");
+                } else {
+                    appendMessage("⚠️ Error: No response received.", "bot");
+                }
+
+            } catch (err) {
+                console.error(err);
+                typingIndicator.style.display = "none";
+                appendMessage("⚠️ Network Error. Please try again.", "bot");
+            }
+        });
+
+        // --- 5. MICROPHONE LOGIC ---
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRecognition) {
+            const recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.lang = "en-US";
+
+            micBtn.addEventListener("click", () => {
+                if (micBtn.classList.contains("active")) {
+                    recognition.stop();
+                } else {
+                    recognition.start();
+                }
+            });
+
+            recognition.onstart = () => {
+                micBtn.classList.add("active");
+                micBtn.style.color = "#ef4444"; // Red when recording
+                chatInput.placeholder = "Listening...";
+            };
+
+            recognition.onend = () => {
+                micBtn.classList.remove("active");
+                micBtn.style.color = ""; // Reset color
+                chatInput.placeholder = "Ask a question...";
+            };
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                chatInput.value = transcript;
+                // Optional: Auto-submit on speak
+                // chatForm.dispatchEvent(new Event('submit')); 
+            };
+        } else {
+            micBtn.style.display = "none"; // Hide if not supported
+        }
+
+        // --- 6. RESIZE LOGIC (Vanilla JS) ---
+        let isResizing = false;
+        let startX, startY, startW, startH;
+
+        if(resizeHandle) {
+            resizeHandle.addEventListener('mousedown', initDrag, false);
+        }
+
+        function initDrag(e) {
+            if(window.innerWidth < 768) return; // Disable on mobile
+            isResizing = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            startW = parseInt(document.defaultView.getComputedStyle(chatContainer).width, 10);
+            startH = parseInt(document.defaultView.getComputedStyle(chatContainer).height, 10);
+            document.documentElement.addEventListener('mousemove', doDrag, false);
+            document.documentElement.addEventListener('mouseup', stopDrag, false);
+        }
+
+        function doDrag(e) {
+            if (!isResizing) return;
+            // Calculations for Top-Left resize handle
+            const newW = startW + (startX - e.clientX); 
+            const newH = startH + (startY - e.clientY);
+
+            if (newW > 300 && newW < 800) chatContainer.style.width = newW + 'px';
+            if (newH > 400 && newH < window.innerHeight - 50) chatContainer.style.height = newH + 'px';
+        }
+
+        function stopDrag() {
+            isResizing = false;
+            document.documentElement.removeEventListener('mousemove', doDrag, false);
+            document.documentElement.removeEventListener('mouseup', stopDrag, false);
+        }
+
+        // --- 7. TEXT TO SPEECH ---
+        let synth = window.speechSynthesis;
+        let currentUtterance = null;
+
+        window.speakMessage = function(elementId, btn) {
+            // Cancel if currently speaking
+            if (synth.speaking) {
+                synth.cancel();
+                // Reset all icons
+                document.querySelectorAll('.fa-stop').forEach(el => {
+                    el.classList.remove('fa-stop');
+                    el.classList.add('fa-volume-up');
+                });
+                return;
+            }
+
+            const textEl = document.getElementById(elementId);
+            if (!textEl) return;
+
+            const text = textEl.innerText;
+            const utterance = new SpeechSynthesisUtterance(text);
+            
+            // UI Update
+            const icon = btn.querySelector('i');
+            icon.classList.remove('fa-volume-up');
+            icon.classList.add('fa-stop');
+
+            utterance.onend = () => {
+                icon.classList.remove('fa-stop');
+                icon.classList.add('fa-volume-up');
+            };
+
+            synth.speak(utterance);
+        };
+    });
+  </script>
+</body>
+</html>

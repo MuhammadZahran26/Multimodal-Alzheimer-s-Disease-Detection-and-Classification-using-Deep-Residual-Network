@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Create Patient Account — MediCare AI</title>
+
+  <!-- FIX: Load Tailwind CDN first -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Tailwind config -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#0ea5a4',
+            accent: '#7c3aed',
+            brandBlue: '#0052cc'
+          },
+          keyframes: {
+            floaty: {
+              '0%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(-8px)' },
+              '100%': { transform: 'translateY(0px)' }
+            },
+            shine: {
+              '0%': { transform: 'translateX(-120%)' },
+              '100%': { transform: 'translateX(120%)' }
+            }
+          },
+          animation: {
+            floaty: 'floaty 6s ease-in-out infinite',
+            shine: 'shine 1.2s linear infinite'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    :root{
+      --btn-grad-from: #0ea5a4;
+      --btn-grad-to:   #7c3aed;
+      --primary:       #0ea5a4;
+      --accent:        #7c3aed;
+      --text-light:    #e6eef0;
+      --glass-bg: rgba(255,255,255,0.04);
+    }
+
+    html,body { height:100%; margin:0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; }
+    body {
+      background-image: linear-gradient(180deg, rgba(3,7,7,0.70), rgba(3,7,7,0.90)), url('/static/images/brain.jpg');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      color: var(--text-light);
+    }
+
+    /* center wrapper */
+    .page-wrap {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 1rem;
+    }
+
+    /* card */
+    .signup-card {
+      width: 100%;
+      max-width: 680px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 14px;
+      padding: 2rem;
+      box-shadow: 0 20px 60px rgba(2,6,23,0.6);
+      backdrop-filter: blur(6px);
+    }
+
+    /* logo area */
+    .logo-mark {
+      width:44px; height:44px; border-radius:10px;
+      display:inline-flex; align-items:center; justify-content:center;
+      background: linear-gradient(135deg,var(--btn-grad-from),var(--btn-grad-to));
+      box-shadow: 0 8px 30px rgba(2,6,23,0.25);
+    }
+
+    h1 { color: #fff; }
+    p.lead { color: rgba(230,238,240,0.78); }
+
+    /* inputs */
+    .form-input {
+      width:100%;
+      padding: .62rem .9rem;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.06);
+      background: rgba(255,255,255,0.02);
+      color: var(--text-light);
+      font-size: 0.95rem;
+      transition: box-shadow .12s, border-color .12s, transform .06s;
+    }
+    .form-input::placeholder { color: rgba(230,238,240,0.42); }
+    .form-input:focus { outline: none; border-color: var(--btn-grad-from); box-shadow: 0 8px 30px rgba(14,165,164,0.06); transform: translateY(-1px); }
+
+    /* buttons */
+    .btn-primary {
+      display:inline-flex; align-items:center; justify-content:center;
+      gap:.5rem;
+      width:100%;
+      padding:.75rem 1rem;
+      border-radius:10px;
+      border:none;
+      cursor:pointer;
+      font-weight:700;
+      font-size:1.02rem;
+      background: linear-gradient(135deg, var(--btn-grad-from), var(--btn-grad-to));
+      color:#fff;
+      box-shadow: 0 12px 36px rgba(2,6,23,0.28);
+      transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
+      position:relative;
+      overflow:hidden;
+    }
+    .btn-primary:hover { transform: translateY(-3px); filter: brightness(1.03); box-shadow: 0 20px 48px rgba(2,6,23,0.34); }
+    .btn-primary:active { transform: translateY(-1px); }
+
+    /* animated shimmer element on button */
+    .btn-primary .shine {
+      position:absolute; inset:0; pointer-events:none; overflow:hidden;
+    }
+    .btn-primary .shine::after {
+      content:'';
+      position:absolute;
+      top:-40%; left:-40%;
+      width:180%; height:180%;
+      transform:rotate(12deg);
+      opacity:0.12;
+      background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.75) 50%, rgba(255,255,255,0) 100%);
+      animation: shine 1.6s linear infinite;
+    }
+
+    /* small helper text & errors */
+    .muted { color: rgba(230,238,240,0.72); }
+    .form-error { color: #ffb4b4; font-size:0.92rem; margin-top:.5rem; }
+    .small { font-size:0.86rem; color: rgba(230,238,240,0.7); }
+
+    /* responsive form layout */
+    .row-2 { display:flex; gap:1rem; }
+    @media (max-width:640px) { .row-2 { display:block } }
+
+    /* back link */
+    .btn-back {
+      display:inline-flex; align-items:center; gap:.5rem;
+      padding:.45rem .75rem; border-radius:8px;
+      border:1px solid rgba(255,255,255,0.06);
+      background: rgba(255,255,255,0.02);
+      color: var(--text-light);
+      text-decoration:none;
+      font-weight:600;
+      transition: transform .12s, box-shadow .12s;
+    }
+    .btn-back:hover { transform: translateY(-2px); box-shadow: 0 8px 26px rgba(2,6,23,0.12); }
+
+    /* checkbox */
+    .checkbox { accent-color: var(--btn-grad-from); width: 1rem; height: 1rem; }
+
+    /* subtle reveal animation */
+    .reveal { animation: fadeInUp .6s cubic-bezier(.2,.9,.2,1) both; }
+    @keyframes fadeInUp { 0%{opacity:0; transform:translateY(8px)} 100%{opacity:1; transform:none} }
+
+    /* tiny focus ring for accessibility */
+    .focus-ring:focus { outline: 3px solid rgba(14,165,164,0.12); outline-offset: 3px; border-radius: 10px; }
+  </style>
+</head>
+<body>
+  <div class="page-wrap">
+    <div class="signup-card reveal" role="main" aria-labelledby="signupTitle">
+
+      <!-- header row -->
+      <div class="flex items-center justify-between mb-4">
+          <a href="{{ url_for('patient_login') }}" class="btn-back"> 
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden style="stroke:currentColor">
+            <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+          </svg>
+          Back
+        </a>
+
+        <div class="text-xs muted">Secure • HIPAA-aware</div>
+      </div>
+
+      <!-- logo & title -->
+      <div class="mb-6 flex items-start gap-4">
+        <div class="logo-mark" aria-hidden="true">
+          <img src="/static/images/mental-health.png" alt="MediCare logo" class="w-7 h-7 object-contain">
+        </div>
+        <div>
+          <h1 id="signupTitle" class="text-2xl font-extrabold">Create your Patient account</h1>
+          <p class="lead small">Sign up to track scans, receive AI summaries and securely share results with clinicians.</p>
+        </div>
+      </div>
+
+      <!-- form -->
+      <form id="signupForm" action="/signup/patient" method="POST" novalidate>
+        {# {{ form.hidden_tag() }} #}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="form-error" style="margin-bottom: 1rem;">
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+
+        <!-- FIX: Merged First/Last name into one 'full_name' field to match Database and Backend -->
+        <div class="mb-4">
+          <label for="full_name" class="text-sm font-medium muted">Full Name</label>
+          <input id="full_name" name="full_name" type="text" required autocomplete="name" placeholder="Muhammad Khan" class="form-input mt-2 focus-ring" />
+          <div id="fullNameError" class="form-error" style="display:none;"></div>
+        </div>
+
+        <div class="mb-4">
+          <label for="username" class="text-sm font-medium muted">Username</label>
+          <input id="username" name="username" type="text" required autocomplete="username" placeholder="muhammad_k" class="form-input mt-2 focus-ring" />
+          <div id="usernameError" class="form-error" style="display:none;"></div>
+        </div>
+
+        <div class="mb-4">
+          <label for="email" class="text-sm font-medium muted">Email address</label>
+          <input id="email" name="email" type="email" required autocomplete="email" placeholder="you@example.com" class="form-input mt-2 focus-ring" />
+          <div id="emailError" class="form-error" style="display:none;"></div>
+        </div>
+
+        <div class="mb-4">
+          <label for="password" class="text-sm font-medium muted">Password</label>
+          <input id="password" name="password" type="password" required minlength="8" placeholder="Min 8 characters" class="form-input mt-2 focus-ring" />
+          <div id="pwdTips" class="small" style="margin-top:.5rem">Use at least 8 characters with uppercase, lowercase and numbers.</div>
+          <div id="pwdStrength" class="form-error" style="display:none;"></div>
+        </div>
+
+        <div class="mb-4">
+          <label for="confirm-password" class="text-sm font-medium muted">Confirm password</label>
+          <input id="confirm-password" name="confirm_password" type="password" required minlength="8" placeholder="Repeat password" class="form-input mt-2 focus-ring" />
+          <div id="confirmError" class="form-error" style="display:none;"></div>
+        </div>
+
+        <div class="mb-4 flex items-center gap-3">
+          <input id="terms" name="terms" type="checkbox" class="checkbox" />
+          <label for="terms" class="small muted">I agree to the <a href="#" class="text-[var(--btn-grad-from)] underline">Terms of Service</a> and HIPAA policy.</label>
+        </div>
+
+        <div class="mb-4">
+          <button id="createBtn" type="submit" class="btn-primary focus-ring">
+            Create Account
+            <span class="shine" aria-hidden="true"></span>
+          </button>
+        </div>
+
+        <div class="text-center mt-2">
+          <p class="small muted">Already have an account? <a href="{{ url_for('patient_login_page') }}" class="text-[var(--btn-grad-from)] font-medium">Sign in</a></p>
+        </div>
+      </form>
+
+    </div>
+  </div>
+
+  <!-- Client-side validation Logic -->
+  <script>
+    (function(){
+      const form = document.getElementById('signupForm');
+      const fullName = document.getElementById('full_name');
+      const username = document.getElementById('username');
+      const email = document.getElementById('email');
+      const pwd = document.getElementById('password');
+      const confirm = document.getElementById('confirm-password');
+      const createBtn = document.getElementById('createBtn');
+      
+      const fullNameError = document.getElementById('fullNameError');
+      const usernameError = document.getElementById('usernameError');
+      const emailError = document.getElementById('emailError');
+      const pwdStrength = document.getElementById('pwdStrength');
+      const confirmError = document.getElementById('confirmError');
+
+      // Basic helpers
+      function show(el, msg) { if (!el) return; el.style.display = 'block'; el.textContent = msg || ''; }
+      function hide(el) { if (!el) return; el.style.display = 'none'; el.textContent = ''; }
+
+      function checkEmail(val) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
+      }
+
+      function passwordScore(value) {
+        let score = 0;
+        if (value.length >= 8) score++;
+        if (/[A-Z]/.test(value)) score++;
+        if (/[a-z]/.test(value)) score++;
+        if (/[0-9]/.test(value)) score++;
+        if (/[\W_]/.test(value)) score++;
+        return score;
+      }
+
+      function strengthText(score) {
+        if (score <= 1) return {txt: 'Very weak', color: '#ff4d4f'};
+        if (score === 2) return {txt: 'Weak', color: '#ff7a59'};
+        if (score === 3) return {txt: 'Okay', color: '#ffb84d'};
+        if (score === 4) return {txt: 'Strong', color: '#8ad36a'};
+        return {txt: 'Very strong', color: '#2bd36a'};
+      }
+
+      // Live password strength
+      pwd.addEventListener('input', () => {
+        const v = pwd.value || '';
+        if (!v) { hide(pwdStrength); return; }
+        const s = passwordScore(v);
+        const st = strengthText(s);
+        pwdStrength.style.display = 'block';
+        pwdStrength.textContent = 'Strength: ' + st.txt;
+        pwdStrength.style.color = st.color;
+      });
+
+      // Confirm match live
+      confirm.addEventListener('input', () => {
+        if (!confirm.value) { hide(confirmError); return; }
+        if (confirm.value !== pwd.value) show(confirmError, 'Passwords do not match');
+        else hide(confirmError);
+      });
+
+      // Form submit Handler
+      form.addEventListener('submit', (e) => {
+        // 1. Reset any previous errors
+        hide(fullNameError); hide(usernameError); hide(emailError); hide(pwdStrength); hide(confirmError);
+
+        let hasError = false;
+
+        // 2. Validate Full Name
+        if (!fullName.value || fullName.value.trim().length < 2) {
+          show(fullNameError, 'Please enter your full name.');
+          fullName.focus();
+          hasError = true;
+        }
+
+        // 3. Validate Username
+        else if (!username.value || username.value.trim().length < 3) {
+          show(usernameError, 'Username must be at least 3 characters.');
+          username.focus();
+          hasError = true;
+        }
+
+        // 4. Validate Email
+        else if (!email.value || !checkEmail(email.value.trim())) {
+          show(emailError, 'Please enter a valid email address.');
+          email.focus();
+          hasError = true;
+        }
+
+        // 5. Validate Password Length
+        else if (pwd.value.length < 8) {
+          show(pwdStrength, 'Password must be at least 8 characters.');
+          pwd.focus();
+          hasError = true;
+        }
+
+        // 6. Validate Match
+        else if (pwd.value !== confirm.value) {
+          show(confirmError, 'Passwords do not match.');
+          confirm.focus();
+          hasError = true;
+        }
+
+        // 7. Validate Terms
+        const terms = document.getElementById('terms');
+        if (!terms.checked && !hasError) {
+          alert('Please agree to the Terms of Service and HIPAA policy to continue.');
+          hasError = true;
+        }
+
+        // If validation fails, STOP the form submission
+        if (hasError) {
+          e.preventDefault();
+          return;
+        }
+
+        // If validation PASSES:
+        // We do NOT call e.preventDefault(). 
+        // We let the browser naturally POST to /signup/patient
+        
+        // Just show a loading state for better UX while the server processes
+        createBtn.disabled = true;
+        createBtn.style.opacity = '0.85';
+        createBtn.innerHTML = '<svg style="vertical-align:middle; margin-right:8px" width="18" height="18" viewBox="0 0 50 50"><path fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" d="M25 5a20 20 0 010 40 20 20 0 010-40" stroke-dasharray="31.415, 31.415"><animateTransform attributeName="transform" type="rotate" repeatCount="indefinite" dur="0.9s" from="0 25 25" to="360 25 25"/></path></svg>Creating...';
+      });
+
+      // Accessibility
+      document.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Escape') {
+          hide(fullNameError); hide(usernameError); hide(emailError); hide(pwdStrength); hide(confirmError);
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

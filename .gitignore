@@ -1,0 +1,30 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+instance/
+
+# Virtual environments
+.venv/
+.env
+
+# Data Files that use for RAG system
+data/
+
+# Upload folder as well as it contains the files that are uploaded by the user and we don't want to track them in git
+uploads/
+
+# Models folder as it contains the trained models and we don't want to track them in git
+models/
+*.pth
+
+# App.py file as it contains the code for the Flask application and we don't want to track it in git
+app.py
+
+# main requirements file
+req.txt
+
+README.local.md

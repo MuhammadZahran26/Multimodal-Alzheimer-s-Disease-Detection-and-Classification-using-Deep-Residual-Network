@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Upload Scan — MediCare AI</title>
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            mcgreen: '#0ea5a4',
+            mcpurple: '#7c3aed'
+          },
+          keyframes: {
+            floaty: { '0%': { transform: 'translateY(0px)' }, '50%': { transform: 'translateY(-6px)' }, '100%': { transform: 'translateY(0px)' } },
+            shimmer: { '0%': { backgroundPosition: '-200% 0' }, '100%': { backgroundPosition: '200% 0' } }
+          },
+          animation: {
+            floaty: 'floaty 6s ease-in-out infinite',
+            shimmer: 'shimmer 2.4s linear infinite'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    :root {
+      --mc-from: #0ea5a4;
+      --mc-to:   #7c3aed;
+      --card-bg: #ffffff;
+    }
+
+    html,body { height:100%; margin:0; font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial; -webkit-font-smoothing:antialiased; color:#0f1724; font-size:14px; }
+    body {
+      background-image:
+        linear-gradient(180deg, rgba(255,255,255,0.96), rgba(250,250,252,0.98)),
+        url('/static/images/brain.jpg');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+    }
+
+    .wrap { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:2rem 1rem; }
+    .card {
+      width:100%; max-width:880px;
+      background: var(--card-bg);
+      border-radius:12px; padding:1.25rem;
+      box-shadow: 0 18px 40px rgba(16,24,40,0.06);
+      border: 1px solid rgba(15,23,42,0.04);
+      position:relative;
+    }
+
+    .hero { display:flex; gap:0.9rem; align-items:center; }
+    .logo-box {
+      width:46px; height:46px; border-radius:10px; display:inline-grid; place-items:center;
+      background: linear-gradient(135deg,var(--mc-from),var(--mc-to)); color:white;
+      box-shadow:0 8px 24px rgba(14,165,164,0.10);
+    }
+    .logo-box img { width:22px; height:22px; object-fit:contain; }
+
+    .title { font-weight:700; font-size:1.05rem; margin:0; }
+    .subtitle { color:#64748b; font-size:0.85rem; margin-top:2px; }
+
+    .pills { display:flex; gap:8px; margin-top:10px; }
+    .pill { padding:6px 10px; border-radius:999px; font-weight:700; font-size:0.82rem; }
+    .pill.active { background: linear-gradient(90deg,var(--mc-from),var(--mc-to)); color:#fff; box-shadow:0 8px 30px rgba(14,165,164,0.08); }
+    .pill.inactive { background:#f1f5f9; color:#334155; border:1px solid #e6eef5; }
+
+    /* compact dropzone */
+    .dropzone {
+      border-radius:10px; border: 1px dashed rgba(15,23,42,0.06);
+      height:180px; display:flex; align-items:center; justify-content:center; transition: all .14s;
+      background:linear-gradient(180deg,#fff,#fbfdff); overflow:hidden;
+    }
+    .dropzone:hover { transform: translateY(-3px); box-shadow: 0 12px 30px rgba(2,6,23,0.05); border-color: rgba(14,165,164,0.14); }
+
+    .btn-small {
+      padding:8px 12px; border-radius:10px; font-weight:700; font-size:0.9rem; cursor:pointer; border:none;
+      background: linear-gradient(90deg,var(--mc-from),var(--mc-to)); color:white; box-shadow:0 8px 22px rgba(14,165,164,0.10);
+    }
+    .btn-small.alt { background:#7c3aed; }
+
+    .muted { color:#64748b; font-size:0.88rem; }
+
+    .file-chip {
+      display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; background:#f8fafc;
+      font-size:0.88rem; color:#0f1724; border:1px solid #eef2ff; max-width:100%;
+    }
+    .file-chip .meta { max-width:230px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:inline-block; vertical-align:middle; }
+
+    .input { width:100%; padding:8px 10px; border-radius:10px; border:1px solid #e6eef5; background:#fff; font-size:0.92rem; }
+    .input:focus { outline:none; box-shadow:0 8px 30px rgba(14,165,164,0.06); border-color:var(--mc-from); }
+
+    .review { background:#fbfdff; border-radius:10px; padding:12px; border:1px solid #eef2ff; font-size:0.93rem; }
+
+    .submit-btn {
+      padding:9px 14px; border-radius:10px; font-weight:700; font-size:0.95rem; color:white; border:none;
+      background: linear-gradient(90deg,var(--mc-from),var(--mc-to)); box-shadow:0 10px 30px rgba(14,165,164,0.08);
+    }
+    .submit-btn:disabled { opacity:0.7; transform:none; }
+
+    .tooltip { position:relative; cursor:default; }
+    .tooltip:hover::after {
+      content: attr(data-full);
+      position: absolute; bottom: calc(100% + 8px); left:50%; transform:translateX(-50%);
+      background:#0f1724; color:white; padding:6px 10px; border-radius:8px; font-size:0.82rem; white-space:nowrap; z-index:50;
+    }
+
+    @media (max-width:720px) {
+      .card { padding:1rem; }
+      .dropzone { height:150px; }
+      .file-chip .meta { max-width:120px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <main class="card" role="main" aria-labelledby="uploadTitle">
+      <div class="hero">
+        <div class="logo-box" aria-hidden="true">
+          <!-- use the same logo used in home page -->
+          <img src="/static/images/mental-health.png" alt="MediCare logo">
+        </div>
+        <div>
+          <h1 id="uploadTitle" class="title">Upload scan — MediCare AI</h1>
+          <div class="subtitle">Send MRI and/or PET scans for fast, private AI triage. HIPAA-aware.</div>
+          <div class="pills" style="margin-top:8px;">
+            <div id="pill-1" class="pill active">1 • Upload</div>
+            <div id="pill-2" class="pill inactive">2 • Patient</div>
+            <div id="pill-3" class="pill inactive">3 • Review</div>
+          </div>
+        </div>
+      </div>
+
+      <form id="uploadForm" action="{{ url_for('upload_process') }}" method="POST" enctype="multipart/form-data" novalidate>
+        <!-- STEP 1 -->
+        <section id="step-1" class="mt-4">
+          <label class="dropzone" id="dropzone">
+            <div style="text-align:center; width:100%; padding:8px;">
+              <div style="display:flex; gap:8px; justify-content:center; align-items:center; margin-bottom:8px;">
+                <span class="file-chip" style="background:#eef2ff; border:1px solid #dde8ff; font-weight:700;">Accepts: MRI • PET</span>
+                <span class="muted" style="margin-left:6px;">Max file: 100MB • NIfTI/DICOM/PNG/JPG/PDF</span>
+              </div>
+
+              <div style="display:flex; gap:8px; justify-content:center; margin-bottom:10px;">
+                <input id="mriInput" name="mri_scan" type="file" accept=".nii,.nii.gz,.dcm,.png,.jpg,.jpeg,.pdf" class="sr-only" />
+                <input id="petInput" name="pet_scan" type="file" accept=".nii,.nii.gz,.dcm,.png,.jpg,.jpeg,.pdf" class="sr-only" />
+                <button type="button" class="btn-small" onclick="document.getElementById('mriInput').click();">Upload MRI</button>
+                <button type="button" class="btn-small alt" onclick="document.getElementById('petInput').click();">Upload PET</button>
+              </div>
+
+              <div class="muted" style="font-size:0.86rem;">Or drag files into the box. You may upload one or both.</div>
+
+              <div id="selectedFiles" style="margin-top:10px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap;"></div>
+            </div>
+          </label>
+
+          <div class="mt-4 flex justify-end gap-3">
+            <button type="button" class="btn-small" onclick="toStep(2)">Next: Patient Info →</button>
+          </div>
+        </section>
+
+        <!-- STEP 2 -->
+        <section id="step-2" class="hidden mt-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm font-semibold mb-1">Patient name</label>
+              <input id="patient_name" name="patient_name" type="text" class="input" placeholder="John Doe" required>
+            </div>
+            <div>
+              <label class="block text-sm font-semibold mb-1">Age</label>
+              <input id="patient_age" name="patient_age" type="number" min="0" class="input" placeholder="72" required>
+            </div>
+            <div>
+              <label class="block text-sm font-semibold mb-1">Gender</label>
+              <select id="patient_gender" name="patient_gender" class="input" required>
+                <option value="">Select</option>
+                <option>Male</option>
+                <option>Female</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-semibold mb-1">Education (years)</label>
+              <input id="patient_education" name="patient_education" type="number" min="0" class="input" placeholder="16" required>
+            </div>
+          </div>
+
+          <div class="mt-4 flex justify-between">
+            <button type="button" class="btn-small" onclick="toStep(1)">← Back</button>
+            <button type="button" class="btn-small" onclick="toStep(3)">Next: Review →</button>
+          </div>
+        </section>
+
+        <!-- STEP 3 -->
+        <section id="step-3" class="hidden mt-4">
+          <div class="review">
+            <div class="flex items-start justify-between">
+              <div>
+                <div style="font-weight:800;">Review submission</div>
+                <div class="muted" style="margin-top:4px;">Confirm before sending for analysis.</div>
+              </div>
+              <div class="muted">Private • HIPAA-aware</div>
+            </div>
+
+            <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <div class="muted mb-2">Files</div>
+                <div id="reviewFiles" style="display:flex; gap:6px; flex-wrap:wrap;"></div>
+              </div>
+
+              <div>
+                <div class="muted mb-2">Patient info</div>
+                <div><strong id="rev-name">—</strong></div>
+                <div class="muted" id="rev-age">Age: —</div>
+                <div class="muted" id="rev-gender">Gender: —</div>
+                <div class="muted" id="rev-edu">Education: —</div>
+              </div>
+            </div>
+
+            <div class="mt-4 flex justify-between items-center">
+              <button type="button" class="btn-small" onclick="toStep(2)">← Back</button>
+              <button type="submit" id="submitBtn" class="submit-btn">Submit for Analysis</button>
+            </div>
+          </div>
+        </section>
+      </form>
+    </main>
+  </div>
+
+  <script>
+    // elements
+    const mriInput = document.getElementById('mriInput');
+    const petInput = document.getElementById('petInput');
+    const selectedFiles = document.getElementById('selectedFiles');
+    const reviewFiles = document.getElementById('reviewFiles');
+
+    function humanFileSize(bytes) {
+      const thresh = 1024;
+      if (Math.abs(bytes) < thresh) return bytes + ' B';
+      const units = ['KB','MB','GB','TB'];
+      let u = -1;
+      do { bytes /= thresh; ++u; } while(Math.abs(bytes) >= thresh && u < units.length - 1);
+      return bytes.toFixed(1)+' '+units[u];
+    }
+
+    function fileChip(file, kind) {
+      const div = document.createElement('div');
+      div.className = 'file-chip tooltip';
+      div.setAttribute('data-full', file.name);
+      div.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0f1724"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M14 2v6h6" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        <div style="display:inline-block; vertical-align:middle; margin-left:6px;">
+          <div class="meta" style="max-width:220px;">${kind}: ${file.name}</div>
+          <div style="font-size:0.78rem; color:#64748b;">${humanFileSize(file.size)}</div>
+        </div>`;
+      return div;
+    }
+
+    function updateSelectedList() {
+      selectedFiles.innerHTML = '';
+      reviewFiles.innerHTML = '';
+
+      const files = [];
+      if (mriInput.files && mriInput.files[0]) files.push({f: mriInput.files[0], k: 'MRI'});
+      if (petInput.files && petInput.files[0]) files.push({f: petInput.files[0], k: 'PET'});
+
+      if (files.length === 0) {
+        const hint = document.createElement('div');
+        hint.className = 'muted';
+        hint.textContent = 'No files chosen yet — upload MRI and/or PET.';
+        selectedFiles.appendChild(hint);
+      } else {
+        files.forEach(item => {
+          selectedFiles.appendChild(fileChip(item.f, item.k));
+          const rev = document.createElement('div');
+          rev.className = 'file-chip tooltip';
+          rev.setAttribute('data-full', item.f.name);
+          rev.style.maxWidth = '100%';
+          rev.innerHTML = `<div class="meta">${item.k}: ${item.f.name}</div>`;
+          reviewFiles.appendChild(rev);
+        });
+      }
+    }
+
+    mriInput.addEventListener('change', updateSelectedList);
+    petInput.addEventListener('change', updateSelectedList);
+
+    // drag & drop onto dropzone
+    const dropzone = document.getElementById('dropzone');
+    dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.style.borderColor = 'rgba(14,165,164,0.16)'; });
+    dropzone.addEventListener('dragleave', () => { dropzone.style.borderColor = ''; });
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      const items = Array.from(e.dataTransfer.files || []);
+      items.forEach(file => {
+        const n = file.name.toLowerCase();
+        if (n.includes('pet') && !petInput.files.length) { const dt=new DataTransfer(); dt.items.add(file); petInput.files = dt.files; }
+        else if (n.includes('mri') && !mriInput.files.length) { const dt=new DataTransfer(); dt.items.add(file); mriInput.files = dt.files; }
+        else {
+          if (!mriInput.files.length) { const dt=new DataTransfer(); dt.items.add(file); mriInput.files = dt.files; }
+          else if (!petInput.files.length) { const dt=new DataTransfer(); dt.items.add(file); petInput.files = dt.files; }
+        }
+      });
+      updateSelectedList();
+      dropzone.style.borderColor = '';
+    });
+
+    // step navigation & validation
+    function toStep(n) {
+      if (n === 2) {
+        if ((!mriInput.files || !mriInput.files[0]) && (!petInput.files || !petInput.files[0])) {
+          alert('Please upload at least one scan (MRI or PET) to continue.');
+          return;
+        }
+      }
+      if (n === 3) {
+        const name = document.getElementById('patient_name').value.trim();
+        const age = document.getElementById('patient_age').value.trim();
+        const gender = document.getElementById('patient_gender').value.trim();
+        const edu = document.getElementById('patient_education').value.trim();
+        if (!name || !age || !gender || !edu) {
+          alert('Please fill all patient information before review.');
+          return;
+        }
+      }
+
+      document.getElementById('step-1').classList.toggle('hidden', n !== 1);
+      document.getElementById('step-2').classList.toggle('hidden', n !== 2);
+      document.getElementById('step-3').classList.toggle('hidden', n !== 3);
+
+      document.getElementById('pill-1').classList.toggle('active', n === 1);
+      document.getElementById('pill-1').classList.toggle('inactive', n !== 1);
+      document.getElementById('pill-2').classList.toggle('active', n === 2);
+      document.getElementById('pill-2').classList.toggle('inactive', n !== 2);
+      document.getElementById('pill-3').classList.toggle('active', n === 3);
+      document.getElementById('pill-3').classList.toggle('inactive', n !== 3);
+
+      if (n === 3) {
+        const name = document.getElementById('patient_name').value.trim();
+        const age = document.getElementById('patient_age').value.trim();
+        const gender = document.getElementById('patient_gender').value.trim();
+        const edu = document.getElementById('patient_education').value.trim();
+
+        document.getElementById('rev-name').textContent = name || '—';
+        document.getElementById('rev-age').textContent = `Age: ${age || '—'}`;
+        document.getElementById('rev-gender').textContent = `Gender: ${gender || '—'}`;
+        document.getElementById('rev-edu').textContent = `Education: ${edu ? edu + ' years' : '—'}`;
+
+        updateSelectedList();
+      }
+    }
+
+    // form submit validation
+    document.getElementById('uploadForm').addEventListener('submit', function(e) {
+      if ((!mriInput.files || !mriInput.files[0]) && (!petInput.files || !petInput.files[0])) {
+        e.preventDefault(); alert('Please upload at least one scan (MRI or PET).'); toStep(1); return false;
+      }
+      const name = document.getElementById('patient_name').value.trim();
+      const age = document.getElementById('patient_age').value.trim();
+      const gender = document.getElementById('patient_gender').value.trim();
+      const edu = document.getElementById('patient_education').value.trim();
+      if (!name || !age || !gender || !edu) {
+        e.preventDefault(); alert('Please fill patient info first.'); toStep(2); return false;
+      }
+
+      const btn = document.getElementById('submitBtn');
+      if (btn) { btn.disabled = true; btn.textContent = 'Submitting…'; }
+      // allow normal form submission to back-end
+    });
+
+    // initial
+    updateSelectedList();
+  </script>
+</body>
+</html>
